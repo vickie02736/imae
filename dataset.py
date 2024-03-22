@@ -34,22 +34,24 @@ maxs = [0.1717242785274844, 0.1717242785274844, 1.2]
 
 # the dataset for prediction
 class DataBuilder(Dataset): 
-    def __init__(self, dataset_path, clip_length, input_length, transform=None):
+    def __init__(self, dataset_path, clip_length, rollout_times, transform=None):
         # dataset_path: csv file
-        # clip_length = input_length + target_length
+        # clip_length: the length of input
+        # rollout_times * clip_length = the length of target
 
         self.clip_length = clip_length
-        self.input_length = input_length
+        self.rollout_times = rollout_times
+        self.total_length = clip_length * (rollout_times+1)
 
         df = pd.read_csv(dataset_path)
         unique_keys = df["Key"].unique()
 
         all_clips = []
         for i in range(len(unique_keys)):
-            filtered_df = df[df["Key"] == unique_keys[i]]
+            filtered_df = df[df["Key"] == unique_keys[i]] # Take each video
             # sorted each sequence
             sorted_df = filtered_df.sort_values(by = ["Pos"])
-            clips = self.cut_clips(sorted_df, clip_length)
+            clips = self.cut_clips(sorted_df, self.clip_length, self.rollout_times)
             all_clips.extend(clips)
         self.all_clips = all_clips
             
@@ -76,8 +78,8 @@ class DataBuilder(Dataset):
         sub_sequance = self.normalize(sub_sequance, mins, maxs)
         sub_sequance = torch.tensor(sub_sequance, dtype=torch.float32)
 
-        input_idx = clip["Pos"].iloc[0:self.input_length]
-        target_idx = clip["Pos"].iloc[self.input_length:self.clip_length]
+        input_idx = clip["Pos"].iloc[0:self.clip_length]
+        target_idx = clip["Pos"].iloc[self.clip_length:self.total_length]
         
         input_sequence = full_sequence[input_idx]
         input_sequence = self.normalize(input_sequence, mins, maxs)
@@ -90,10 +92,10 @@ class DataBuilder(Dataset):
         return {"R": param_R, "Hp": param_Hp, "Pos": param_Pos, "Label": param_Label, 
                 "Input": input_sequence, "Target": target_sequence, "Sub_S": sub_sequance}
     
-    def cut_clips(self, sorted_df, clip_length):
+    def cut_clips(self, sorted_df, clip_length, rollout_times):
         clips = []
-        for start in range(len(sorted_df)- clip_length + 1): 
-            end = start + clip_length
+        for start in range(len(sorted_df)- self.total_length + 1): 
+            end = start + self.total_length
             clip = sorted_df.iloc[start:end]
             clips.append(clip)
         return clips # all clips from the same sequence
