@@ -4,14 +4,15 @@ import os
 
 import torch
 import torch.nn as nn
-from torch import optim
 
 from dataset_imae import DataBuilder
 from torch.utils.data import DataLoader
 from model_imae import VisionTransformer
 
 from matplotlib import pyplot as plt
+
 import copy
+import tqdm
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
@@ -40,7 +41,7 @@ dataset = DataBuilder("data/valid_file.csv", seq_length, rollout_times)
 running_loss = []
 
 # Iterating over the training dataset
-for i, sample in enumerate(dataset): 
+for i, sample in enumerate(tqdm(dataset)): 
 
     origin = sample["Input"].float().to(device)
     origin = origin.unsqueeze(0)
@@ -62,9 +63,6 @@ for i, sample in enumerate(dataset):
             chunk_loss.append(loss.item())
     
     running_loss.append(chunk_loss)
-    print(running_loss)
-        
-    # if i == 30: 
 
     fig, ax = plt.subplots(rollout_times*2+1, seq_length, figsize=(20, rollout_times*4+2))
 
@@ -95,69 +93,3 @@ for i, sample in enumerate(dataset):
     # plt.show()
     plt.savefig("{save_path}/{i}.png".format(save_path = rec_save_path, i = i))
     plt.close()
-
-
-
-
-
-# def eval(model, dataloader, mask_ratio, loss_fn=nn.MSELoss(), rollout_times=2, seq_length=10, device=torch.device("cpu")):
-
-#     model.eval()
-
-#     running_loss = []
-
-#     with torch.no_grad():
-
-#     # Iterating over the training dataset
-#         for i, sample in enumerate(dataloader): 
-
-#             origin = sample["Input"].float().to(device)
-#             target = sample["Target"].float().to(device)
-            
-#             # Divide the target into chunks for each rollout
-#             target_chunks = torch.chunk(target, rollout_times, dim=1)
-#             output_chunks = []
-
-#             chunk_loss = []
-
-#             for chunk in target_chunks:
-#                 output = model(origin, mask_ratio)
-#                 output_chunks.append(output)
-#                 loss = loss_fn(output, chunk)
-#                 chunk_loss.append(loss.item())
-            
-#             if i == 30: 
-
-#                 _, ax = plt.subplots(rollout_times*2+1, seq_length, figsize=(20, rollout_times*4+2))
-
-#                 for j in range(seq_length): 
-#                     # visualise input
-#                     ax[0][j].imshow(origin[i][j][0].cpu().detach().numpy())
-#                     ax[0][j].set_xticks([])
-#                     ax[0][j].set_yticks([])
-#                     ax[0][j].set_title("Timestep {timestep} (Input)".format(timestep=j+1), fontsize=10)
-                    
-#                 for k, chunk in enumerate(target_chunks):
-
-#                     for j in range(seq_length):
-
-#                         # visualise output
-#                         ax[2*k+1][j].imshow(output[i][j][0].cpu().detach().numpy())
-#                         ax[2*k+1][j].set_xticks([])
-#                         ax[k+1][j].set_yticks([])
-#                         ax[k+1][j].set_title("Timestep {timestep} (Prediction)".format(timestep=j+11+k*20), fontsize=10)
-#                         # visualise target
-#                         ax[2*k+2][j].imshow(target[i][j][0].cpu().detach().numpy())
-#                         ax[2*k+2][j].set_xticks([])
-#                         ax[2*k+2][j].set_yticks([])
-#                         ax[2*k+2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11+k*20), fontsize=10)
-                
-#                 plt.tight_layout()
-#                 plt.show()
-
-#     running_loss = [x + y for x, y in zip(running_loss, chunk_loss)]
-
-#     avg_loss = loss / len(dataloader.dataset)
-
-
-# eval(model, dataloader, mask_ratio=0.1)

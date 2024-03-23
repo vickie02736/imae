@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
 
-from model_imae import VisionTransformer, train, eval
+from model_imae import VisionTransformer, train
 
 
 ### Argparse
@@ -44,7 +44,7 @@ learning_rate = 1e-4
 T_start = args.epochs * 0.05 * len(train_dataset) // batch_size
 T_start = int(T_start)
 optimizer = optim.AdamW(model.parameters(), lr=learning_rate, betas=(0.9, 0.95), weight_decay=0.03)
-scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_start, eta_min=1e-6, last_epoch=-1, verbose=False)
+scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_start, eta_min=1e-6, last_epoch=-1)
 scaler = torch.cuda.amp.GradScaler()
 
 train_loss = []
@@ -72,27 +72,14 @@ loss_fn = nn.MSELoss()
 file_number = int(args.mask_ratio * 10)
 
 for epoch in tqdm(epochs): 
-
-    print("epoch:", epoch)
-    
-    train_loss_epoch = train(model, optimizer, scheduler, scaler, train_loader, args.mask_ratio)
-    train_loss.append(train_loss_epoch)
-        
-
     rec_save_path = "data/Vit_rec_{file_number}".format(file_number=file_number)
     if not os.path.exists(rec_save_path):
         os.makedirs(rec_save_path)
-    
-    eval_loss_epoch = eval(model, val_loader, args.mask_ratio, epoch, 
-                           save_path=rec_save_path)
-    eval_loss.append(eval_loss_epoch)
-
-    print("Train Loss:", train_loss_epoch, "eval_loss:", eval_loss_epoch)
-
-    checkpoint = {'epoch': epoch, 'model': model.state_dict(),
-                  'optimizer': optimizer.state_dict(), 'scaler': scaler.state_dict(), 
-                  'train_loss': train_loss, 'eval_loss': eval_loss}
     checkpoint_save_path = "data/Vit_checkpoint_{file_number}".format(file_number=file_number)
     if not os.path.exists(checkpoint_save_path):
         os.makedirs(checkpoint_save_path)
-    torch.save(checkpoint, checkpoint_save_path+"/epoch_{epoch}.pth".format(epoch=epoch))
+
+    train(model, optimizer, scheduler, scaler, args.mask_ratio, loss_fn, 
+          train_loader, val_loader, epoch,
+          checkpoint_save_path, rec_save_path, device)
+    

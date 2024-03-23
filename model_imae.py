@@ -43,8 +43,6 @@ class VisionTransformer(nn.Module):
         self.conv = nn.Conv2d(3, 3, kernel_size = 3, padding =1)
         self.seq_conv = torch.vmap(self.conv)
 
-    # def to_half(self): 
-    #     self.batch_conv = self.conv.half()
 
     def forward(self, x, mask_ratio): 
         # random masking
@@ -124,17 +122,17 @@ class VisionTransformer(nn.Module):
         return x
     
 
-loss_fn = nn.MSELoss()
+def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, 
+          train_dataloader, valid_dataloader, epoch,
+          checkpoint_savepath, rec_savepath, device):
 
-def train(model, optimizer, scheduler, scaler, dataloader, mask_ratio):
-
-    # model.train()
+    model.train()
     
     # Initializing variable for storing loss
     running_loss = 0
 
     # Iterating over the training dataset
-    for i, sample in enumerate(dataloader): 
+    for i, sample in enumerate(train_dataloader): 
      
         optimizer.zero_grad()
 
@@ -161,13 +159,13 @@ def train(model, optimizer, scheduler, scaler, dataloader, mask_ratio):
         running_loss += loss.item()
         
     # Averaging out loss and metrics over entire dataset
-    num_samples = len(dataloader.dataset)
-    avg_loss = running_loss / num_samples
+    num_samples = len(train_dataloader.dataset)
+    train_loss = running_loss / num_samples
 
-    return avg_loss
+    # return avg_loss
 
 
-def eval(model, dataloader, mask_ratio, epoch, save_path):
+# def eval(model, dataloader, mask_ratio, epoch, save_path):
 
     model.eval()
     
@@ -177,7 +175,7 @@ def eval(model, dataloader, mask_ratio, epoch, save_path):
     with torch.no_grad():
 
     # Iterating over the training dataset
-        for i, sample in enumerate(dataloader): 
+        for i, sample in enumerate(valid_dataloader): 
 
             origin = sample["Input"].float().to(device)
             target = sample["Target"].float().to(device)
@@ -214,14 +212,17 @@ def eval(model, dataloader, mask_ratio, epoch, save_path):
                     ax[2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11), fontsize=10)
 
                 plt.tight_layout()  # Adjust spacing between plots
-                plt.savefig("{save_path}/epoch_{epoch}.png".format(save_path = save_path, epoch = epoch))
-                # plt.show()
+                plt.savefig("{save_path}/epoch_{epoch}.png".format(save_path = rec_savepath, epoch = epoch))
                 plt.close()
 
-        model.train()
-
         # Averaging out loss and metrics over entire dataset
-        num_samples = len(dataloader.dataset)
-        avg_loss = running_loss / num_samples
+        num_samples = len(valid_dataloader.dataset)
+        valid_loss = running_loss / num_samples
 
-        return avg_loss
+        checkpoint = {'epoch': epoch, 'model': model.state_dict(),
+                      'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict(), 
+                      'scaler': scaler.state_dict(), 'learning_rate': scheduler.get_last_lr(), 
+                      'train_loss': train_loss, 'eval_loss': valid_loss}
+        torch.save(checkpoint, checkpoint_savepath+"/epoch_{epoch}.pth".format(epoch=epoch))
+
+    return None
