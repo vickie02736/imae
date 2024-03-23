@@ -7,8 +7,7 @@ import torch.nn as nn
 from torch import optim
 
 # from dataset import DataBuilder
-from Project.imae.dataset import DataBuilder
-
+from dataset_imae import DataBuilder
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
@@ -21,6 +20,8 @@ parser = argparse.ArgumentParser(description='Train Vision Transformer')
 
 parser.add_argument('--mask_ratio', type=float, default=0.9, help='Masking ratio')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs')
+parser.add_argument('--batch_size', type=int, default=128, help='Batch size')
+parser.add_argument('--rollout_times', type=int, default=1, help='Rollout times')
 
 args = parser.parse_args()
 ### End of Argparse
@@ -31,14 +32,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = VisionTransformer(3, 16, 128, device)
 model = model.to(device)
 
-batch_size = 128
-# train_dataset = DataBuilder('/home/uceckz0/Scratch/imae/train_file.csv',20, 10)
-train_dataset = DataBuilder('/home/uceckz0/Scratch/imae/train_file.csv',10, 1)
-
+batch_size = args.batch_size
+train_dataset = DataBuilder('data/train_file.csv',10, args.rollout_times)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-# val_dataset = DataBuilder('/home/uceckz0/Scratch/imae/valid_file.csv',20, 10)
-val_dataset = DataBuilder('/home/uceckz0/Scratch/imae/valid_file.csv',10, 1)
-
+val_dataset = DataBuilder('data/valid_file.csv',10, args.rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
 epochs = range(0, args.epochs)
@@ -82,9 +79,10 @@ for epoch in tqdm(epochs):
     train_loss.append(train_loss_epoch)
         
 
-    rec_save_path = "/home/uceckz0/Scratch/imae/Vit_rec_{file_number}".format(file_number=file_number)
+    rec_save_path = "data/Vit_rec_{file_number}".format(file_number=file_number)
     if not os.path.exists(rec_save_path):
         os.makedirs(rec_save_path)
+    
     eval_loss_epoch = eval(model, val_loader, args.mask_ratio, epoch, 
                            save_path=rec_save_path)
     eval_loss.append(eval_loss_epoch)
@@ -94,7 +92,7 @@ for epoch in tqdm(epochs):
     checkpoint = {'epoch': epoch, 'model': model.state_dict(),
                   'optimizer': optimizer.state_dict(), 'scaler': scaler.state_dict(), 
                   'train_loss': train_loss, 'eval_loss': eval_loss}
-    checkpoint_save_path = "/home/uceckz0/Scratch/imae/Vit_checkpoint_{file_number}".format(file_number=file_number)
+    checkpoint_save_path = "data/Vit_checkpoint_{file_number}".format(file_number=file_number)
     if not os.path.exists(checkpoint_save_path):
         os.makedirs(checkpoint_save_path)
     torch.save(checkpoint, checkpoint_save_path+"/epoch_{epoch}.pth".format(epoch=epoch))
