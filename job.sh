@@ -1,10 +1,10 @@
 #!/bin/bash -l
 
-#$ -N imae_2
-#$ -l h_rt=26:00:0
-
+#$ -N imae_0
+#$ -l h_rt=24:00:0
+#$ -l mem=40G
 #$ -l gpu=1
-#$ -ac allow=EF
+#$ -ac allow=L
 
 #$ -m be
 #$ -M uceckz0@ucl.ac.uk
@@ -13,8 +13,12 @@
 
 echo "This script is running on "
 hostname
+nvidia-smi
 
 source /home/uceckz0/miniconda3/bin/activate
 conda activate imae
 
-python main_imae.py --mask_ratio 0.2 --epochs 200 --batch_size 64
+timestamp=$(date +%d-%m-%Y_%H:%M:%S)
+echo $timestamp
+python main_imae.py --mask_ratio 0.0 --epochs 200
+echo $timestamp

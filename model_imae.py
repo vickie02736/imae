@@ -1,12 +1,12 @@
 import sys
-sys.path.append("/home/uceckz0/Project/imae")
+sys.path.append(".")
 
 import torch
 import torch.nn as nn
 from matplotlib import pyplot as plt
 import copy
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class VisionTransformer(nn.Module): 
@@ -122,9 +122,7 @@ class VisionTransformer(nn.Module):
         return x
     
 
-def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, 
-          train_dataloader, valid_dataloader, epoch,
-          checkpoint_savepath, rec_savepath, device):
+def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_dataloader, device): 
 
     model.train()
     
@@ -132,7 +130,7 @@ def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn,
     running_loss = 0
 
     # Iterating over the training dataset
-    for i, sample in enumerate(train_dataloader): 
+    for _, sample in enumerate(train_dataloader): 
      
         optimizer.zero_grad()
 
@@ -162,10 +160,12 @@ def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn,
     num_samples = len(train_dataloader.dataset)
     train_loss = running_loss / num_samples
 
-    # return avg_loss
+    return {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict(), 
+            'scaler': scaler.state_dict(), 'learning_rate': scheduler.get_last_lr()}, train_loss
 
 
-# def eval(model, dataloader, mask_ratio, epoch, save_path):
+
+def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
 
     model.eval()
     
@@ -175,7 +175,9 @@ def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn,
     with torch.no_grad():
 
     # Iterating over the training dataset
-        for i, sample in enumerate(valid_dataloader): 
+        for i, sample in enumerate(dataloader): 
+
+            print(i)
 
             origin = sample["Input"].float().to(device)
             target = sample["Target"].float().to(device)
@@ -212,17 +214,35 @@ def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn,
                     ax[2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11), fontsize=10)
 
                 plt.tight_layout()  # Adjust spacing between plots
-                plt.savefig("{save_path}/epoch_{epoch}.png".format(save_path = rec_savepath, epoch = epoch))
+                plt.savefig("{save_path}/epoch_{epoch}.png".format(save_path = save_path, epoch = epoch))
                 plt.close()
 
         # Averaging out loss and metrics over entire dataset
-        num_samples = len(valid_dataloader.dataset)
+        num_samples = len(dataloader.dataset)
         valid_loss = running_loss / num_samples
 
-        checkpoint = {'epoch': epoch, 'model': model.state_dict(),
-                      'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict(), 
-                      'scaler': scaler.state_dict(), 'learning_rate': scheduler.get_last_lr(), 
-                      'train_loss': train_loss, 'eval_loss': valid_loss}
-        torch.save(checkpoint, checkpoint_savepath+"/epoch_{epoch}.pth".format(epoch=epoch))
+    return valid_loss
 
+train_losses = []
+valid_losses = []
+
+
+def train_model(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, 
+                train_dataloader, valid_dataloader, epoch, 
+                checkpoint_savepath, rec_savepath, device):
+    
+    train_arg, train_loss = train(model, optimizer, scheduler, scaler, 
+                                  mask_ratio, loss_fn, train_dataloader, device)
+    valid_loss = eval(model, valid_dataloader, mask_ratio, loss_fn, 
+                      epoch, rec_savepath, device)
+
+    train_losses.append(train_loss)
+    valid_losses.append(valid_loss)
+
+    checkpoint = {'epoch': epoch}
+    checkpoint.update(train_arg)
+    checkpoint['train_loss'] = train_losses
+    checkpoint['valid_loss'] = valid_losses
+    torch.save(checkpoint, checkpoint_savepath+"/epoch_{epoch}.pth".format(epoch=epoch))
+    
     return None

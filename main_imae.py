@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
 
-from model_imae import VisionTransformer, train
+from model_imae import VisionTransformer, train_model
 
 
 ### Argparse
@@ -72,14 +72,14 @@ loss_fn = nn.MSELoss()
 file_number = int(args.mask_ratio * 10)
 
 for epoch in tqdm(epochs): 
-    rec_save_path = "data/Vit_rec_{file_number}".format(file_number=file_number)
-    if not os.path.exists(rec_save_path):
+
+    rec_save_path = "data/Vit_rec/{file_number}".format(file_number=file_number)
+    if not os.path.exists(rec_save_path): 
         os.makedirs(rec_save_path)
-    checkpoint_save_path = "data/Vit_checkpoint_{file_number}".format(file_number=file_number)
+    checkpoint_save_path = "data/Vit_checkpoint/{file_number}".format(file_number=file_number)
     if not os.path.exists(checkpoint_save_path):
         os.makedirs(checkpoint_save_path)
 
-    train(model, optimizer, scheduler, scaler, args.mask_ratio, loss_fn, 
-          train_loader, val_loader, epoch,
-          checkpoint_save_path, rec_save_path, device)
+    train_model(model, optimizer, scheduler, scaler, args.mask_ratio, loss_fn, 
+                train_loader, val_loader, epoch, checkpoint_save_path, rec_save_path, device)
     
