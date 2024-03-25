@@ -6,20 +6,20 @@ import torch
 import torch.nn as nn
 
 from dataset_imae import DataBuilder
-from torch.utils.data import DataLoader
+# from torch.utils.data import DataLoader
 from model_imae import VisionTransformer
 
 from matplotlib import pyplot as plt
 
 import copy
-import tqdm
+
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
 model = VisionTransformer(3, 16, 128, device)
 
-checkpoint_path = "/home/uceckz0/Project/imae/data/Vit_checkpoint_1//epoch_{epoch}.pth".format(epoch=198)
-rec_save_path = "/home/uceckz0/Project/imae/data/Vit_rec_1_rollout_2"
+checkpoint_path = "/home/uceckz0/Project/imae/data/Vit_checkpoint/1//epoch_{epoch}.pth".format(epoch=199)
+rec_save_path = "/home/uceckz0/Project/imae/data/Vit_rec/rollout_1_2"
 if not os.path.exists(rec_save_path):
     os.makedirs(rec_save_path)
 
@@ -41,7 +41,7 @@ dataset = DataBuilder("data/valid_file.csv", seq_length, rollout_times)
 running_loss = []
 
 # Iterating over the training dataset
-for i, sample in enumerate(tqdm(dataset)): 
+for i, sample in enumerate(dataset): 
 
     origin = sample["Input"].float().to(device)
     origin = origin.unsqueeze(0)

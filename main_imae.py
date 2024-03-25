@@ -1,5 +1,5 @@
 import sys
-sys.path.append(".")
+sys.path.append("..")
 import os
 
 import torch
@@ -22,6 +22,7 @@ parser.add_argument('--mask_ratio', type=float, default=0.9, help='Masking ratio
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs')
 parser.add_argument('--batch_size', type=int, default=128, help='Batch size')
 parser.add_argument('--rollout_times', type=int, default=1, help='Rollout times')
+parser.add_argument('--start_epoch', type=int, default=0, help='start epoch after last training')
 
 args = parser.parse_args()
 ### End of Argparse
@@ -33,12 +34,14 @@ model = VisionTransformer(3, 16, 128, device)
 model = model.to(device)
 
 batch_size = args.batch_size
-train_dataset = DataBuilder('data/train_file.csv',10, args.rollout_times)
+train_dataset = DataBuilder('../data/train_file.csv',10, args.rollout_times)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_dataset = DataBuilder('data/valid_file.csv',10, args.rollout_times)
+val_dataset = DataBuilder('../data/valid_file.csv',10, args.rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-epochs = range(0, args.epochs)
+file_number = int(args.mask_ratio * 10)
+
+loss_fn = nn.MSELoss()
 
 learning_rate = 1e-4
 T_start = args.epochs * 0.05 * len(train_dataset) // batch_size
@@ -47,39 +50,44 @@ optimizer = optim.AdamW(model.parameters(), lr=learning_rate, betas=(0.9, 0.95),
 scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_start, eta_min=1e-6, last_epoch=-1)
 scaler = torch.cuda.amp.GradScaler()
 
-train_loss = []
-eval_loss = []
+if args.start_epoch == 0:
 
-# Path to the checkpoint file
-# checkpoint_path = "/home/uceckz0/Scratch/imae/Vit_checkpoint/epoch_{epoch}.pth".format(epoch=101)
+    epochs = range(0, args.epochs)
 
-# # Load the checkpoint
-# checkpoint = torch.load(checkpoint_path)
+    train_losses = []
+    valid_losses = []
 
-# # Update model and optimizer with the loaded state dictionaries
-# model.load_state_dict(checkpoint['model'])
-# optimizer.load_state_dict(checkpoint['optimizer'])
-# scaler.load_state_dict(checkpoint['scaler'])
+else: 
 
-# # Now, you can also access the train and evaluation losses if you need
-# train_loss = checkpoint['train_loss']
-# eval_loss = checkpoint['eval_loss']
+    # Path to the checkpoint file
+    checkpoint_path = "../data/Vit_checkpoint/{file_number}/epoch_{i}.pth".format(file_number=file_number,i=args.start_epoch-1)
+
+    # Load the checkpoint
+    checkpoint = torch.load(checkpoint_path)
+
+    # Update model and optimizer with the loaded state dictionaries
+    model.load_state_dict(checkpoint['model'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    scheduler.load_state_dict(checkpoint['scheduler'])
+    scaler.load_state_dict(checkpoint['scaler'])
+
+    # Now, you can also access the train and evaluation losses if you need
+    train_losses = checkpoint['train_loss']
+    valid_losses = checkpoint['valid_loss']
+
+    epochs = range(args.start_epoch, args.start_epoch + args.epochs)
 
 
-
-loss_fn = nn.MSELoss()
-
-file_number = int(args.mask_ratio * 10)
 
 for epoch in tqdm(epochs): 
 
-    rec_save_path = "data/Vit_rec/{file_number}".format(file_number=file_number)
+    rec_save_path = "../data/Vit_rec/{file_number}".format(file_number=file_number)
     if not os.path.exists(rec_save_path): 
         os.makedirs(rec_save_path)
-    checkpoint_save_path = "data/Vit_checkpoint/{file_number}".format(file_number=file_number)
+    checkpoint_save_path = "../data/Vit_checkpoint/{file_number}".format(file_number=file_number)
     if not os.path.exists(checkpoint_save_path):
         os.makedirs(checkpoint_save_path)
 
-    train_model(model, optimizer, scheduler, scaler, args.mask_ratio, loss_fn, 
+    train_model(model, optimizer, scheduler, scaler, args.mask_ratio, 
+                train_losses, valid_losses, loss_fn, 
                 train_loader, val_loader, epoch, checkpoint_save_path, rec_save_path, device)
-    

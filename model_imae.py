@@ -44,14 +44,18 @@ class VisionTransformer(nn.Module):
         self.seq_conv = torch.vmap(self.conv)
 
 
-    def forward(self, x, mask_ratio): 
-        # random masking
-        num_mask = int(mask_ratio * x.shape[1])
+    def forward(self, x, mask_ratio):
 
-        weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
-        idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device)
-        batch_random_mask = torch.vmap(self.random_mask)
-        x = batch_random_mask(x, idx)
+        mask_ratio = torch.rand(1).item() * (mask_ratio - 0.1) + 0.1
+
+        if mask_ratio != 0: 
+            # random masking
+            num_mask = int(mask_ratio * x.shape[1])
+
+            weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
+            idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device)
+            batch_random_mask = torch.vmap(self.random_mask)
+            x = batch_random_mask(x, idx)
 
         # encode
         x = self.batch_forward(x)
@@ -144,6 +148,7 @@ def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_datalo
 
             # Calculating loss
             loss = loss_fn(output, target)
+            
         
         # Updating weights according to the calculated loss
         scaler.scale(loss).backward(retain_graph=True) # Scales loss
@@ -164,7 +169,6 @@ def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_datalo
             'scaler': scaler.state_dict(), 'learning_rate': scheduler.get_last_lr()}, train_loss
 
 
-
 def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
 
     model.eval()
@@ -176,8 +180,6 @@ def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
 
     # Iterating over the training dataset
         for i, sample in enumerate(dataloader): 
-
-            print(i)
 
             origin = sample["Input"].float().to(device)
             target = sample["Target"].float().to(device)
@@ -223,18 +225,36 @@ def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
 
     return valid_loss
 
-train_losses = []
-valid_losses = []
 
 
-def train_model(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, 
+############################
+from dataset_imae import DataBuilder
+import os
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+test_dataset = DataBuilder("../data/inner_test_file.csv", 10, 2)
+test_sample = test_dataset[10]
+
+origin = test_sample["Input"].float().to(device)
+origin = origin.unsqueeze(0)
+origin_copy = copy.deepcopy(origin)
+target = test_sample["Target"].float().to(device)
+target = target.unsqueeze(0)
+
+# Divide the target into chunks for each rollout
+target_chunks = torch.chunk(target, 2, dim=1)
+output_chunks = []
+
+############################
+
+def train_model(model, optimizer, scheduler, scaler, mask_ratio, 
+                train_losses, valid_losses, loss_fn, 
                 train_dataloader, valid_dataloader, epoch, 
                 checkpoint_savepath, rec_savepath, device):
     
-    train_arg, train_loss = train(model, optimizer, scheduler, scaler, 
-                                  mask_ratio, loss_fn, train_dataloader, device)
-    valid_loss = eval(model, valid_dataloader, mask_ratio, loss_fn, 
-                      epoch, rec_savepath, device)
+    train_arg, train_loss = train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_dataloader, device)
+    valid_loss = eval(model, valid_dataloader, mask_ratio,loss_fn, epoch, rec_savepath, device)
 
     train_losses.append(train_loss)
     valid_losses.append(valid_loss)
@@ -244,5 +264,42 @@ def train_model(model, optimizer, scheduler, scaler, mask_ratio, loss_fn,
     checkpoint['train_loss'] = train_losses
     checkpoint['valid_loss'] = valid_losses
     torch.save(checkpoint, checkpoint_savepath+"/epoch_{epoch}.pth".format(epoch=epoch))
+
+############
     
+    with torch.no_grad():
+        for _ in target_chunks:
+            output = model(origin, 0.1)
+            output_chunks.append(output)
+
+    _, ax = plt.subplots(2*2+1, 10, figsize=(20, 2*4+2))
+
+    for j in range(10): 
+        # visualise input
+        ax[0][j].imshow(origin_copy[0][j][0].cpu().detach().numpy())
+        ax[0][j].set_xticks([])
+        ax[0][j].set_yticks([])
+        ax[0][j].set_title("Timestep {timestep} (Input)".format(timestep=j+1), fontsize=10)
+        
+    for k in range(2):
+        for j in range(10):
+            # visualise output
+            ax[2*k+1][j].imshow(output_chunks[k][0][j][0].cpu().detach().numpy())
+            ax[2*k+1][j].set_xticks([])
+            ax[2*k+1][j].set_yticks([])
+            ax[2*k+1][j].set_title("Timestep {timestep} (Prediction)".format(timestep=j+11+k*10), fontsize=10)
+            # visualise target
+            ax[2*k+2][j].imshow(target_chunks[k][0][j][0].cpu().detach().numpy())
+            ax[2*k+2][j].set_xticks([])
+            ax[2*k+2][j].set_yticks([])
+            ax[2*k+2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11+k*10), fontsize=10)
+    
+    save_path = "/home/uceckz0/Project/imae/data/Vit_rec/test/"
+    if not os.path.exists(save_path): 
+        os.makedirs(save_path)
+
+    plt.tight_layout()
+    plt.savefig("{save_path}/{i}.png".format(save_path = save_path, i = epoch))
+    plt.close()
+
     return None
