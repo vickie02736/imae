@@ -229,18 +229,24 @@ def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
 
 ############################
 from dataset_imae import DataBuilder
+from torch.utils.data import DataLoader
 import os
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 test_dataset = DataBuilder("../data/inner_test_file.csv", 10, 2)
-test_sample = test_dataset[10]
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-origin = test_sample["Input"].float().to(device)
-origin = origin.unsqueeze(0)
-origin_copy = copy.deepcopy(origin)
-target = test_sample["Target"].float().to(device)
-target = target.unsqueeze(0)
+for i, test_sample in enumerate(test_loader): 
+
+    if i == 10:
+
+        origin = test_sample["Input"].float().to(device)
+        # origin = origin.unsqueeze(0)
+        origin_copy = copy.deepcopy(origin)
+        target = test_sample["Target"].float().to(device)
+        # target = target.unsqueeze(0)
+
 
 # Divide the target into chunks for each rollout
 target_chunks = torch.chunk(target, 2, dim=1)
