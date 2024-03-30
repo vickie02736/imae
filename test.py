@@ -12,6 +12,19 @@ from model_imae import VisionTransformer
 from matplotlib import pyplot as plt
 
 import copy
+import argparse
+
+
+parser = argparse.ArgumentParser(description='Train Vision Transformer')
+
+parser.add_argument('--category', type=int, default=3, help='Trained category')
+parser.add_argument('--mask_ratio', type=float, default=0.1, help='Masking ratio')
+parser.add_argument('--rollout_times', type=int, default=1, help='Rollout times')
+parser.add_argument('--load_epoch', type=int, default=0, help='Load which checkpoint')
+
+args = parser.parse_args()
+
+
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -19,8 +32,13 @@ print("Using device: ", device)
 # device = torch.device("cpu")
 model = VisionTransformer(3, 16, 128, device)
 
-checkpoint_path = "../data/Vit_checkpoint/5/epoch_{epoch}.pth".format(epoch=49)
-rec_save_path = "../data/Vit_rec/rollout_1_2"
+rollout_times = args.rollout_times
+seq_length = 10
+mask_ratio = args.mask_ratio
+file_number = int(args.mask_ratio * 10)
+
+checkpoint_path = "../data/Vit_checkpoint/5/epoch_{epoch}.pth".format(epoch=args.load_epoch)
+rec_save_path = "../data/Vit_rec/rollout/ceiling_{category}/maskratio_{file_number}/rollout_{rollout_times}".format(category=args.category, file_number=file_number)
 if not os.path.exists(rec_save_path):
     os.makedirs(rec_save_path)
 
@@ -32,10 +50,6 @@ model = model.to(device)
 loss_fn = nn.MSELoss()
 
 test_loss = []
-
-rollout_times = 2
-seq_length = 10
-mask_ratio = 0.1
 
 dataset = DataBuilder("../data/inner_test_file.csv", seq_length, rollout_times)
 dataloader = DataLoader(dataset, batch_size=128, shuffle=False)

@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/lustre/home/uceckz0/Project/imae/jobs/../test.py", line 41, in <module>
+    rec_save_path = "../data/Vit_rec/rollout/ceiling_{category}/maskratio_{file_number}/rollout_{rollout_times}".format(category=args.category, file_number=file_number)
+KeyError: 'rollout_times'
