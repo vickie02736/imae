@@ -1,12 +1,13 @@
 import sys
 sys.path.append(".")
+import os 
 
 import torch
 import torch.nn as nn
 from matplotlib import pyplot as plt
-import copy
 
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import copy
+import json
 
 
 class VisionTransformer(nn.Module): 
@@ -46,7 +47,7 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x, mask_ratio):
 
-        # mask_ratio = torch.rand(1).item() * (mask_ratio - 0.1) + 0.1
+        mask_ratio = torch.rand(1).item() * (mask_ratio - 0.1) + 0.1
 
         if mask_ratio != 0: 
             # random masking
@@ -126,7 +127,7 @@ class VisionTransformer(nn.Module):
         return x
     
 
-def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_dataloader, device): 
+def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_dataloader, save_path, epoch, device): 
 
     model.train()
     
@@ -154,8 +155,8 @@ def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_datalo
         scaler.scale(loss).backward(retain_graph=True) # Scales loss
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.1)
-        scaler.step(optimizer) # otherwise, optimizer.step() is skipped.
-        scaler.update() # Updates the scale for next iteration.
+        scaler.step(optimizer) 
+        scaler.update() 
         scheduler.step()
 
         # Incrementing loss
@@ -165,8 +166,35 @@ def train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_datalo
     num_samples = len(train_dataloader.dataset)
     train_loss = running_loss / num_samples
 
-    return {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict(), 
-            'scaler': scaler.state_dict(), 'learning_rate': scheduler.get_last_lr()}, train_loss
+    save_model_state(save_path, model.state_dict(), optimizer.state_dict(), scheduler.state_dict(), scaler.state_dict(), epoch)
+
+    return train_loss
+
+
+
+def save_model_state(save_path, model_state, optimizer_state, scheduler_state, scaler_state, epoch):
+    """
+    Saves the model state and related components.
+
+    Parameters:
+    - save_path: Path to save the model state.
+    - model_state: State dictionary of the model.
+    - optimizer_state: State dictionary of the optimizer.
+    - scheduler_state: State dictionary of the scheduler.
+    - scaler_state: State dictionary of the scaler.
+    - epoch: Current epoch number.
+    """
+
+    os.makedirs(save_path, exist_ok=True)  # Ensure the save path exists
+    save_dict = {
+        'model': model_state,
+        'optimizer': optimizer_state,
+        'scheduler': scheduler_state,
+        'scaler': scaler_state,
+        'epoch': epoch
+    }
+    torch.save(save_dict, os.path.join(save_path, f"model_epoch_{epoch}.pth"))
+
 
 
 def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
@@ -217,14 +245,14 @@ def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
                     ax[2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11), fontsize=10)
 
                 plt.tight_layout()  # Adjust spacing between plots
-                plt.savefig("{save_path}/epoch_{epoch}.png".format(save_path = save_path, epoch = epoch))
+                plt.savefig(os.path.join(save_path, f"epoch_{epoch}.png"))
                 plt.close()
 
         # Averaging out loss and metrics over entire dataset
-        num_samples = len(dataloader.dataset)
-        valid_loss = running_loss / num_samples
+        valid_loss = running_loss / len(dataloader.dataset)
 
     return valid_loss
+
 
 
 def train_model(model, optimizer, scheduler, scaler, mask_ratio, 
@@ -232,16 +260,36 @@ def train_model(model, optimizer, scheduler, scaler, mask_ratio,
                 train_dataloader, valid_dataloader, epoch, 
                 checkpoint_savepath, rec_savepath, device):
     
-    train_arg, train_loss = train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_dataloader, device)
+    # Training and evaluation
+    train_loss = train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_dataloader, checkpoint_savepath, epoch, device)
     valid_loss = eval(model, valid_dataloader, mask_ratio,loss_fn, epoch, rec_savepath, device)
 
+    # Append losses to lists
     train_losses.append(train_loss)
     valid_losses.append(valid_loss)
 
-    checkpoint = {'epoch': epoch}
-    checkpoint.update(train_arg)
-    checkpoint['train_loss'] = train_losses
-    checkpoint['valid_loss'] = valid_losses
-    torch.save(checkpoint, checkpoint_savepath+"/epoch_{epoch}.pth".format(epoch=epoch))
+    # Optionally save losses after every epoch or after training completes
+    save_losses(checkpoint_savepath, train_losses, valid_losses)
 
     return None
+
+
+
+def save_losses(save_path, train_losses, valid_losses):
+    """
+    Saves the training and validation losses to a JSON file.
+    
+    Parameters:
+    - save_path: The directory path where the losses will be saved.
+    - train_losses: A list of training losses.
+    - valid_losses: A list of validation losses.
+    """
+    # Ensure the save path exists
+    os.makedirs(save_path, exist_ok=True)
+    loss_data = {
+        'train_losses': train_losses,
+        'valid_losses': valid_losses
+    }
+    with open(os.path.join(save_path, 'losses.json'), 'w') as f:
+        json.dump(loss_data, f)
+

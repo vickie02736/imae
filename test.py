@@ -38,7 +38,9 @@ mask_ratio = args.mask_ratio
 file_number = int(args.mask_ratio * 10)
 
 checkpoint_path = "../data/Vit_checkpoint/5/epoch_{epoch}.pth".format(epoch=args.load_epoch)
-rec_save_path = "../data/Vit_rec/rollout/ceiling_{category}/maskratio_{file_number}/rollout_{rollout_times}".format(category=args.category, file_number=file_number)
+rec_save_path = "../data/Vit_rec/rollout/ceiling_{category}/maskratio_{file_number}/rollout_{rollout_times}".format(category=args.category, 
+                                                                                                                    file_number=file_number, 
+                                                                                                                    rollout_times=args.rollout_times)
 if not os.path.exists(rec_save_path):
     os.makedirs(rec_save_path)
 
@@ -63,7 +65,7 @@ for i, sample in enumerate(dataloader):
 
     with torch.no_grad():
 
-        if i == 1:  
+        # if i == 1:  
 
             origin = sample["Input"].float().to(device)
             target = sample["Target"].float().to(device)
