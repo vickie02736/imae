@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
 
-from model_imae import VisionTransformer, train_model, eval_prime
+from model_imae_r import VisionTransformer, train, eval, eval_rollout
+from model_imae_r import save_losses
 
 
 ### Argparse
@@ -40,7 +41,7 @@ model = model.to(device)
 ### Load data
 batch_size = args.batch_size
 
-train_dataset = DataBuilder('../data/train_file.csv',10, args.rollout_times)
+train_dataset = DataBuilder('../data/train_file.csv',10, 1)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_dataset = DataBuilder('../data/valid_file.csv',10, args.rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
@@ -66,6 +67,7 @@ if args.start_epoch == 0:
     epochs = range(0, args.epochs)
     train_losses = []
     valid_losses = []
+    valid_losses_rollout = []
 
 else: 
     
@@ -86,6 +88,7 @@ else:
         loss_data = json.load(f)
     train_losses = loss_data.get('train_losses', [])
     valid_losses = loss_data.get('valid_losses', [])
+    valid_losses_rollout = loss_data.get('valid_losses_rollout', [])
     
     epochs = range(args.start_epoch, args.start_epoch + args.epochs)
 
@@ -96,21 +99,21 @@ for epoch in tqdm(epochs):
     rec_save_path = "../data/Vit_rec/{file_number}".format(file_number=file_number)
     if not os.path.exists(rec_save_path): 
         os.makedirs(rec_save_path)
+    rollout_rec_save_path = "../data/Vit_rec/{file_number}_rollout".format(file_number=file_number)
     checkpoint_save_path = "../data/Vit_checkpoint/{file_number}".format(file_number=file_number)
     if not os.path.exists(checkpoint_save_path):
         os.makedirs(checkpoint_save_path)
 
-    train_model(model, optimizer, scheduler, scaler, args.mask_ratio, 
-                train_losses, valid_losses, loss_fn, 
-                train_loader, val_loader, epoch, checkpoint_save_path, rec_save_path, device)
-    
-    # rec_prime_save_path = "../data/Vit_rec_prime_/{file_number}".format(file_number=file_number)
-    # if not os.path.exists(rec_prime_save_path): 
-    #     os.makedirs(rec_prime_save_path)
+    # Training and evaluation
+    train_loss = train(model, optimizer, scheduler, scaler, args.mask_ratio, loss_fn, train_loader, checkpoint_save_path, epoch, device)
+    valid_loss = eval(model, val_loader, args.mask_ratio,loss_fn, epoch, rec_save_path, device)
+    valid_r_loss = eval_rollout(model, val_loader, args.mask_ratio, args.rollout_times, loss_fn, epoch, rollout_rec_save_path, device)
 
-    # model_prime = VisionTransformer(3, 16, 128, device)
-    # model_prime = model_prime.to(device)
-    # checkpoint_path = "../data/Vit_checkpoint_prime/{file_number}/model_epoch_{epoch}.pth".format(file_number=file_number, epoch=epoch)
-    # checkpoint = torch.load(checkpoint_path, map_location=device)
-    # model_prime.load_state_dict(checkpoint["model"])
-    # valid_loss_prime = eval_prime(model, val_loader, args.mask_ratio,loss_fn, epoch, rec_prime_save_path, device)
+    # Append losses to lists
+    train_losses.append(train_loss)
+    valid_losses.append(valid_loss)
+    valid_losses_rollout.append(valid_r_loss)
+    
+
+    # Optionally save losses after every epoch or after training completes
+    save_losses(checkpoint_save_path, train_losses, valid_losses, valid_losses_rollout)

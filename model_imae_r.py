@@ -213,6 +213,7 @@ def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
 
             origin = sample["Input"].float().to(device)
             target = sample["Target"].float().to(device)
+            target = target[:, :10, :, :, :]
 
             origin_copy = copy.deepcopy(origin)
 
@@ -256,29 +257,78 @@ def eval(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
     return valid_loss
 
 
+def eval_rollout(model, dataloader, mask_ratio, rollout_times, loss_fn, epoch, rec_save_path, device):
 
-def train_model(model, optimizer, scheduler, scaler, mask_ratio, 
-                train_losses, valid_losses, loss_fn, 
-                train_dataloader, valid_dataloader, epoch, 
-                checkpoint_savepath, rec_savepath, device):
+    model.eval()
     
-    # Training and evaluation
-    train_loss = train(model, optimizer, scheduler, scaler, mask_ratio, loss_fn, train_dataloader, checkpoint_savepath, epoch, device)
-    valid_loss = eval(model, valid_dataloader, mask_ratio,loss_fn, epoch, rec_savepath, device)
+    # Initializing variable for storing loss
+    running_loss = 0
 
-    # Append losses to lists
-    train_losses.append(train_loss)
-    valid_losses.append(valid_loss)
+    with torch.no_grad():
 
-    # Optionally save losses after every epoch or after training completes
-    save_losses(checkpoint_savepath, train_losses, valid_losses)
+    # Iterating over the training dataset
+        for i, sample in enumerate(dataloader):
 
-    # return train_loss, valid_loss
-    return None
+            origin = sample["Input"].float().to(device)
+            target = sample["Target"].float().to(device)
+            origin_copy = copy.deepcopy(origin)
+
+            target_chunks = torch.chunk(target, rollout_times, dim=1)
+            
+            output_chunks = []
+
+            chunk_loss = []
+
+            # for chunk in target_chunks:
+            for _, chunk in enumerate(target_chunks):
+                output = model(origin_copy, mask_ratio)
+                output_chunks.append(output)
+                loss = loss_fn(output, chunk)
+
+                chunk_loss.append(loss.item())
+                origin_copy = output
+
+            for l in chunk_loss:
+                running_loss += l
+
+            # Plot
+            if i == 1:
+
+                _, ax = plt.subplots(rollout_times*2+1, 10, figsize=(20, rollout_times*4+2))
+
+                for j in range(10): 
+                    # visualise input
+                    ax[0][j].imshow(origin[0][j][0].cpu().detach().numpy())
+                    ax[0][j].set_xticks([])
+                    ax[0][j].set_yticks([])
+                    ax[0][j].set_title("Timestep {timestep} (Input)".format(timestep=j+1), fontsize=10)
+                    
+                for k in range(rollout_times): 
+
+                    for j in range(10):
+                        # visualise output
+                        ax[2*k+1][j].imshow(output_chunks[k][0][j][0].cpu().detach().numpy())
+                        ax[2*k+1][j].set_xticks([])
+                        ax[2*k+1][j].set_yticks([])
+                        ax[2*k+1][j].set_title("Timestep {timestep} (Prediction)".format(timestep=j+11+k*10), fontsize=10)
+                        # visualise target
+                        ax[2*k+2][j].imshow(target_chunks[k][0][j][0].cpu().detach().numpy())
+                        ax[2*k+2][j].set_xticks([])
+                        ax[2*k+2][j].set_yticks([])
+                        ax[2*k+2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11+k*10), fontsize=10)
+                
+                plt.tight_layout()
+                # # plt.show()
+                plt.savefig(os.path.join(rec_save_path, f"{epoch}.png"))
+                plt.close()
+
+        # Averaging out loss and metrics over entire dataset
+        valid_loss = running_loss / len(dataloader.dataset)
+
+    return valid_loss
 
 
-
-def save_losses(save_path, train_losses, valid_losses):
+def save_losses(save_path, train_losses, valid_losses, valid_losses_rollout):
     """
     Saves the training and validation losses to a JSON file.
     
@@ -291,64 +341,8 @@ def save_losses(save_path, train_losses, valid_losses):
     os.makedirs(save_path, exist_ok=True)
     loss_data = {
         'train_losses': train_losses,
-        'valid_losses': valid_losses
+        'valid_losses': valid_losses, 
+        'valid_losses_rollout': valid_losses_rollout
     }
     with open(os.path.join(save_path, 'losses.json'), 'w') as f:
         json.dump(loss_data, f)
-
-
-def eval_prime(model, dataloader, mask_ratio,loss_fn, epoch, save_path, device):
-
-    model.eval()
-    
-    # Initializing variable for storing loss
-    running_loss = 0
-
-    with torch.no_grad():
-
-    # Iterating over the training dataset
-        for i, sample in enumerate(dataloader): 
-
-            origin = sample["Input"].float().to(device)
-            target = sample["Target"].float().to(device)
-
-            origin_copy = copy.deepcopy(origin)
-
-            # Generating output
-            output = model(origin_copy, mask_ratio)
-
-            # Calculating loss
-            loss = loss_fn(output, target)
-            
-            # Incrementing loss
-            running_loss += loss.item()
-
-            if i == 1:
-                
-                _, ax = plt.subplots(3, 10, figsize=(20, 8))
-
-                for j in range(len(origin[i])): 
-
-                    ax[0][j].imshow(origin[i][j][0].cpu().detach().numpy())
-                    ax[0][j].set_xticks([])
-                    ax[0][j].set_yticks([])
-                    ax[0][j].set_title("Timestep {timestep} (Input)".format(timestep=j+1), fontsize=10)
-                    
-                    ax[1][j].imshow(output[i][j][0].cpu().detach().numpy())
-                    ax[1][j].set_xticks([])
-                    ax[1][j].set_yticks([])
-                    ax[1][j].set_title("Timestep {timestep} (Prediction)".format(timestep=j+11), fontsize=10)
-
-                    ax[2][j].imshow(target[i][j][0].cpu().detach().numpy())
-                    ax[2][j].set_xticks([])
-                    ax[2][j].set_yticks([])
-                    ax[2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11), fontsize=10)
-
-                plt.tight_layout()  # Adjust spacing between plots
-                plt.savefig(os.path.join(save_path, f"epoch_{epoch}.png"))
-                plt.close()
-
-        # Averaging out loss and metrics over entire dataset
-        valid_loss = running_loss / len(dataloader.dataset)
-
-    return valid_loss
