@@ -2,7 +2,6 @@ import argparse
 import copy
 import json
 import os
-import time
 import random
 import numpy as np
 from tqdm import tqdm
@@ -18,7 +17,6 @@ from torch.utils.data import DataLoader
 
 
 SEED = 3409
-
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
@@ -53,7 +51,7 @@ model = VisionTransformer(3, 16, 128, device)
 model = model.to(device)
 ###
 
-start_time = time.time()
+
 ### Load data
 train_dataset = DataBuilder('../data/train_file.csv',10, 1)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -182,5 +180,3 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
     valid_losses.append(chunk_losses)
 
     save_losses(checkpoint_save_path, train_losses, valid_losses)
-
-

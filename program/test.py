@@ -2,23 +2,19 @@ import argparse
 import copy
 import json
 import os
-import time
 import random
 import numpy as np
-from tqdm import tqdm
 
 from model import VisionTransformer
-from utils import plot_rollout, save_losses
+from utils import plot_rollout
 from dataset import DataBuilder
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 
 
 SEED = 3409
-
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
@@ -51,7 +47,6 @@ model = VisionTransformer(3, 16, 128, device)
 model = model.to(device)
 ###
 
-start_time = time.time()
 ### Load data
 val_dataset = DataBuilder('../data/valid_file.csv',10, rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)

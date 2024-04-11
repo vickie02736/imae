@@ -1,6 +1,5 @@
 import os
 import json
-
 from matplotlib import pyplot as plt
 
 def plot_rollout(origin, output_chunks, target_chunks, epoch, path):
@@ -50,5 +49,5 @@ def save_losses(save_path, train_losses, valid_losses):
         'train_losses': train_losses,
         'valid_losses': valid_losses, 
     }
-    with open(os.path.join(save_path, 'losses.json'), 'w') as f:
+    with open(os.path.join(save_path, 'losses.json'), 'w') as f: 
         json.dump(loss_data, f)
