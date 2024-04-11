@@ -22,5 +22,5 @@ conda activate imae
 
 timestamp=$(date +%d-%m-%Y_%H:%M:%S)
 echo $timestamp
-python ../test.py --category 5 --mask_ratio 0.5 --rollout_times 2 --load_epoch 499
+python ../test.py --category 5 --mask_ratio 0.5 --rollout_times 2 --load_epoch 86
 echo $timestamp
