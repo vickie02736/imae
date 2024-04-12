@@ -143,6 +143,10 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
         'epoch': epoch
     }
     torch.save(save_dict, os.path.join(checkpoint_save_path, f'checkpoint_{epoch}.tar'))
+    torch.save(save_dict, os.path.join(checkpoint_save_path, f'checkpoint_{epoch}.pth'))
+    torch.save(save_dict, os.path.join(checkpoint_save_path, f'checkpoint_{epoch}.pth.tar'))
+    torch.save(model, os.path.join(checkpoint_save_path, f'checkpoint_{epoch}.pth'))
+
 
 #####################################################
 
@@ -160,11 +164,18 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
             
             output_chunks = []
             for j, chunk in enumerate(target_chunks):
-                output = model(origin_copy, mask_ratio)
-                output_chunks.append(output)
-                loss = loss_fn(output, chunk)
-                running_losses[j] += loss.item()
-                origin_copy = output
+                if j == 0: 
+                    output = model(origin_copy, mask_ratio)
+                    output_chunks.append(output)
+                    loss = loss_fn(output, chunk)
+                    running_losses[j] += loss.item()
+                    origin_copy = copy.deepcopy(output)
+                else: 
+                    output = model(origin_copy, 0)
+                    output_chunks.append(output)
+                    loss = loss_fn(output, chunk)
+                    running_losses[j] += loss.item()
+                    origin_copy = copy.deepcopy(output)
 
             if i == 1:
                 a = output_chunks[0].unsqueeze(0)

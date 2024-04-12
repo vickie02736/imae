@@ -51,9 +51,9 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x, mask_ratio):
 
-        mask_ratio = torch.rand(1).item() * (mask_ratio - 0.1) + 0.1
-
         if mask_ratio != 0: 
+
+            mask_ratio = torch.rand(1).item() * (mask_ratio - 0.1) + 0.1
             # random masking
             num_mask = int(mask_ratio * x.shape[1])
 

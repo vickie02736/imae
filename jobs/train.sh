@@ -24,7 +24,7 @@ timestamp=$(date +%d-%m-%Y_%H:%M:%S)
 echo $timestamp
 python ../program/main.py\
         --mask-ratio 0.3\
-        --epochs 500\
+        --epochs 200\
         --rollout-times 2\
         --batch-size 128
 echo $timestamp
