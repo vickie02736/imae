@@ -20,7 +20,6 @@ SEED = 3409
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
-torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 
 
@@ -32,6 +31,7 @@ parser.add_argument('--epochs', type=int, default=200, help='Number of epochs')
 parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
 parser.add_argument('--rollout-times', type=int, default=1, help='Rollout times')
 parser.add_argument('--start-epoch', type=int, default=0, help='start epoch after last training')
+parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
 
 args = parser.parse_args()
 ### End of Argparse
@@ -43,19 +43,19 @@ batch_size = args.batch_size
 rollout_times = args.rollout_times
 start_epoch = args.start_epoch
 end_epoch = start_epoch + epochs
+sequence_length = args.sequence_length
 
 
 ### Initialize model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = VisionTransformer(3, 16, 128, device)
-model = model.to(device)
 ###
 
 
 ### Load data
-train_dataset = DataBuilder('../data/train_file.csv',10, 1)
+train_dataset = DataBuilder('../data/train_file.csv',sequence_length, 1)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_dataset = DataBuilder('../data/valid_file.csv',10, rollout_times)
+val_dataset = DataBuilder('../data/valid_file.csv',sequence_length, rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 ###
 
@@ -99,29 +99,34 @@ else:
 
 ### Set save_path
 checkpoint_save_path = "../data/Vit_checkpoint/{file_number}".format(file_number=file_number)
-if not os.path.exists(checkpoint_save_path):
-    os.makedirs(checkpoint_save_path)
+os.makedirs(checkpoint_save_path, exist_ok=True)
+
 rec_save_path = "../data/Vit_rec/{file_number}".format(file_number=file_number)
-if not os.path.exists(rec_save_path): 
-    os.makedirs(rec_save_path)
+os.makedirs(rec_save_path, exist_ok=True)
+
 rollout_rec_save_path = "../data/Vit_rec/{file_number}_rollout".format(file_number=file_number)
-if not os.path.exists(rollout_rec_save_path): 
-    os.makedirs(rollout_rec_save_path)
+os.makedirs(rollout_rec_save_path, exist_ok=True)
 ###
 
+model.to(device)
 
-for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
+for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"): 
+
+    torch.cuda.manual_seed(epoch)
 
     model.train()
     
     running_loss = 0
+
     for _, sample in enumerate(train_loader): 
         optimizer.zero_grad()
 
         with torch.autocast(device_type = device.type):
             target = sample["Target"].float().to(device)
             origin = sample["Input"].float().to(device)
-            output = model(origin, mask_ratio)
+            num_mask = int(torch.rand(1).item() * mask_ratio * sequence_length)
+
+            output = model(origin, num_mask)
             loss = loss_fn(output, target)
 
         scaler.scale(loss).backward(retain_graph=True) # Scales loss
@@ -145,7 +150,6 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
     torch.save(save_dict, os.path.join(checkpoint_save_path, f'checkpoint_{epoch}.tar'))
     torch.save(save_dict, os.path.join(checkpoint_save_path, f'checkpoint_{epoch}.pth'))
     torch.save(save_dict, os.path.join(checkpoint_save_path, f'checkpoint_{epoch}.pth.tar'))
-    torch.save(model, os.path.join(checkpoint_save_path, f'checkpoint_{epoch}.pth'))
 
 
 #####################################################
@@ -163,19 +167,21 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
             target_chunks = torch.chunk(target, rollout_times, dim=1)
             
             output_chunks = []
+
             for j, chunk in enumerate(target_chunks):
+
+                torch.manual_seed(i+j+i*j)
+
                 if j == 0: 
-                    output = model(origin_copy, mask_ratio)
-                    output_chunks.append(output)
-                    loss = loss_fn(output, chunk)
-                    running_losses[j] += loss.item()
-                    origin_copy = copy.deepcopy(output)
+                    num_mask = int(torch.rand(1).item() * mask_ratio * sequence_length)
+                    output = model(origin_copy, num_mask)
                 else: 
                     output = model(origin_copy, 0)
-                    output_chunks.append(output)
-                    loss = loss_fn(output, chunk)
-                    running_losses[j] += loss.item()
-                    origin_copy = copy.deepcopy(output)
+                
+                output_chunks.append(output)
+                loss = loss_fn(output, chunk)
+                running_losses[j] += loss.item()
+                origin_copy = copy.deepcopy(output)
 
             if i == 1:
                 a = output_chunks[0].unsqueeze(0)
@@ -191,3 +197,10 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
     valid_losses.append(chunk_losses)
 
     save_losses(checkpoint_save_path, train_losses, valid_losses)
+
+####################################################
+    
+    model = VisionTransformer(3, 16, 128, device)
+    checkpoint = torch.load(checkpoint_path)
+    model.load_state_dict(checkpoint['model'])
+    model.to(device)

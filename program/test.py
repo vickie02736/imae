@@ -24,11 +24,12 @@ torch.backends.cudnn.deterministic = True
 
 ### Argparse
 parser = argparse.ArgumentParser(description='Train Vision Transformer')
-parser.add_argument('--checkpoint-path', metavar='OPTIONS', nargs='+',
+parser.add_argument('--checkpoint-path', type=str, 
                     help='the checkpoint used in test')
 parser.add_argument('--mask-ratio', type=float, default=0.5, help='Masking ratio')
 parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
-parser.add_argument('--rollout-times', type=int, default=1, help='Rollout times')
+parser.add_argument('--rollout-times', type=int, default=64, help='Rollout times')
+parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
 
 
 args = parser.parse_args()
@@ -39,23 +40,23 @@ mask_ratio = args.mask_ratio
 file_number = int(mask_ratio * 10)
 batch_size = args.batch_size
 rollout_times = args.rollout_times
+sequence_length = args.sequence_length
+
 rollout_rec_save_path = f"../data/Vit_test/{file_number}"
+os.makedirs(rollout_rec_save_path, exist_ok=True)
 
 ### Initialize model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = VisionTransformer(3, 16, 128, device)
-model = model.to(device)
+checkpoint = torch.load(checkpoint_path)
+model.load_state_dict(checkpoint['model'])
+model.to(device)
 ###
 
 ### Load data
-val_dataset = DataBuilder('../data/valid_file.csv',10, rollout_times)
+val_dataset = DataBuilder('../data/valid_file.csv',sequence_length, rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 ###
-
-model = VisionTransformer(3, 16, 128, device)
-checkpoint = torch.load(checkpoint_path)
-model.load_state_dict(checkpoint['model'])
-model = model.to(device)
 
 loss_fn = nn.MSELoss()
 test_losses = []
@@ -63,6 +64,7 @@ test_losses = []
 model.eval()
 
 running_losses = [0 for _ in range(rollout_times)]
+
 with torch.no_grad():
 
     for i, sample in enumerate(val_loader):
@@ -73,21 +75,25 @@ with torch.no_grad():
         target_chunks = torch.chunk(target, rollout_times, dim=1)
         
         output_chunks = []
-        for j, chunk in enumerate(target_chunks):
-            if j == 0: 
-                output = model(origin_copy, mask_ratio)
-                output_chunks.append(output)
-                loss = loss_fn(output, chunk)
-                running_losses[j] += loss.item()
-                origin_copy = copy.deepcopy(output)
-            else: 
-                output = model(origin_copy, 0)
-                output_chunks.append(output)
-                loss = loss_fn(output, chunk)
-                running_losses[j] += loss.item()
-                origin_copy = copy.deepcopy(output)
 
-        plot_rollout(origin, output_chunks, target_chunks, i, rollout_rec_save_path)
+        for j, chunk in enumerate(target_chunks):
+
+            if j == 0: 
+                # num_mask = int(torch.rand(1).item() * mask_ratio * sequence_length)
+                output = model(origin_copy, 0.3)
+            
+            else: 
+                output = model(origin_copy, 0.3)
+
+            origin_copy = copy.deepcopy(output)
+
+            loss = loss_fn(output, chunk)
+            running_losses[j] += loss.item()
+            output_chunks.append(output)
+
+        if i == 1: 
+            plot_rollout(origin, output_chunks, target_chunks, i, rollout_rec_save_path)
+
 
 chunk_losses = []
 for running_loss in running_losses:

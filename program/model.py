@@ -3,15 +3,8 @@ sys.path.append(".")
 
 import torch
 import torch.nn as nn
-
-SEED = 1234
 import random
-random.seed(SEED)
 import numpy as np
-np.random.seed(SEED)
-torch.manual_seed(SEED)
-torch.cuda.manual_seed(SEED)
-torch.backends.cudnn.deterministic = True
 
 
 class VisionTransformer(nn.Module): 
@@ -19,6 +12,7 @@ class VisionTransformer(nn.Module):
     def __init__(self, channel_num, patch_len, image_len, device_id):
 
         super().__init__()
+
         self.channel_num = channel_num
         self.patch_len = patch_len
         self.image_len = image_len
@@ -34,7 +28,6 @@ class VisionTransformer(nn.Module):
         self.pos_embedding = self.pos_embedding.to(device_id)
 
         self.random_tensor = torch.randn(self.channel_num,self.image_len,self.image_len).to(device_id) # for random masking
-
         
         transform_layer = nn.TransformerEncoderLayer(d_model=self.patch_embedding_len, nhead=6, dropout=0.0, batch_first=True)
         self.transformer = nn.TransformerEncoder(transform_layer, num_layers=6)
@@ -51,15 +44,19 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x, mask_ratio):
 
-        if mask_ratio != 0: 
+        torch.manual_seed(1234)
 
-            mask_ratio = torch.rand(1).item() * (mask_ratio - 0.1) + 0.1
+        mask_ratio = torch.rand(1).item() * (mask_ratio - 0.1) + 0.1
+
+        num_mask = int(mask_ratio * x.shape[1])
+
+        if num_mask != 0: 
+
             # random masking
-            num_mask = int(mask_ratio * x.shape[1])
-
             weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
-            idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device)
+            idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device) 
             batch_random_mask = torch.vmap(self.random_mask)
+
             x = batch_random_mask(x, idx)
 
         # encode
@@ -125,7 +122,7 @@ class VisionTransformer(nn.Module):
         x = seq_unpatchify(x)
         return x
     
-    def random_mask(self, x, idx):
+    def random_mask(self, x, idx): 
         self.random_tensor = self.random_tensor.to(x.device)
         x[idx] = self.random_tensor
         return x

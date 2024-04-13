@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
-#$ -N imae_3
-#$ -l h_rt=72:00:0
+#$ -N imae_5
+#$ -l h_rt=12:00:0
 #$ -l mem=16G
 #$ -l gpu=1
 #$ -ac allow=EFL
@@ -23,7 +23,7 @@ conda activate imae
 timestamp=$(date +%d-%m-%Y_%H:%M:%S)
 echo $timestamp
 python ../program/main.py\
-        --mask-ratio 0.3\
+        --mask-ratio 0.5\
         --epochs 200\
         --rollout-times 2\
         --batch-size 128
