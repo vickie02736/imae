@@ -3,8 +3,6 @@ sys.path.append(".")
 
 import torch
 import torch.nn as nn
-import random
-import numpy as np
 
 
 class VisionTransformer(nn.Module): 
@@ -42,13 +40,7 @@ class VisionTransformer(nn.Module):
         self.seq_conv = torch.vmap(self.conv)
 
 
-    def forward(self, x, mask_ratio):
-
-        torch.manual_seed(1234)
-
-        mask_ratio = torch.rand(1).item() * (mask_ratio - 0.1) + 0.1
-
-        num_mask = int(mask_ratio * x.shape[1])
+    def forward(self, x, num_mask):
 
         if num_mask != 0: 
 
@@ -75,8 +67,7 @@ class VisionTransformer(nn.Module):
         x = x.permute(1,0,2,3,4)
 
         return x
-
-        
+ 
     def patchify(self, x): 
         # Unfold the height and width dimensions
         x = x.unfold(1, self.patch_len, self.patch_len).unfold(2, self.patch_len, self.patch_len)

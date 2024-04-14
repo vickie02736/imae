@@ -24,25 +24,21 @@ torch.backends.cudnn.deterministic = True
 
 ### Argparse
 parser = argparse.ArgumentParser(description='Train Vision Transformer')
-parser.add_argument('--checkpoint-path', type=str, 
-                    help='the checkpoint used in test')
-parser.add_argument('--mask-ratio', type=float, default=0.5, help='Masking ratio')
+parser.add_argument('--checkpoint-num', type=int, default=0, help='Checkpoint number')
 parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
 parser.add_argument('--rollout-times', type=int, default=64, help='Rollout times')
 parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
 
-
 args = parser.parse_args()
 ### End of Argparse
 
-checkpoint_path = args.checkpoint_path
-mask_ratio = args.mask_ratio
-file_number = int(mask_ratio * 10)
+checkpoint_num = args.checkpoint_num
 batch_size = args.batch_size
 rollout_times = args.rollout_times
 sequence_length = args.sequence_length
+checkpoint_path = f"../data/Vit_test/checkpoint_{checkpoint_num}.pth"
 
-rollout_rec_save_path = f"../data/Vit_test/{file_number}"
+rollout_rec_save_path = f"../data/Vit_test/"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 
 ### Initialize model
@@ -54,7 +50,7 @@ model.to(device)
 ###
 
 ### Load data
-val_dataset = DataBuilder('../data/valid_file.csv',sequence_length, rollout_times)
+val_dataset = DataBuilder('../data/inner_test_file.csv',sequence_length, rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 ###
 
@@ -79,17 +75,15 @@ with torch.no_grad():
         for j, chunk in enumerate(target_chunks):
 
             if j == 0: 
-                # num_mask = int(torch.rand(1).item() * mask_ratio * sequence_length)
-                output = model(origin_copy, 0.3)
-            
+                mask_ratio = torch.rand(1).item()
+                num_mask = int(mask_ratio * sequence_length)
+                output = model(origin_copy, num_mask)
             else: 
-                output = model(origin_copy, 0.3)
-
-            origin_copy = copy.deepcopy(output)
-
+                output = model(origin_copy, 0)
+            
+            output_chunks.append(output)
             loss = loss_fn(output, chunk)
             running_losses[j] += loss.item()
-            output_chunks.append(output)
 
         if i == 1: 
             plot_rollout(origin, output_chunks, target_chunks, i, rollout_rec_save_path)

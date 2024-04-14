@@ -20,16 +20,17 @@ SEED = 3409
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 
 
 ### Argparse
 parser = argparse.ArgumentParser(description='Train Vision Transformer')
 
-parser.add_argument('--mask-ratio', type=float, default=0.9, help='Masking ratio')
+# parser.add_argument('--mask-ratio', type=float, default=0.9, help='Masking ratio')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs')
 parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
-parser.add_argument('--rollout-times', type=int, default=1, help='Rollout times')
+# parser.add_argument('--rollout-times', type=int, default=1, help='Rollout times')
 parser.add_argument('--start-epoch', type=int, default=0, help='start epoch after last training')
 parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
 
@@ -37,10 +38,10 @@ args = parser.parse_args()
 ### End of Argparse
 
 epochs = args.epochs
-mask_ratio = args.mask_ratio
-file_number = int(mask_ratio * 10)
+# mask_ratio = args.mask_ratio
+# file_number = int(mask_ratio * 10)
 batch_size = args.batch_size
-rollout_times = args.rollout_times
+# rollout_times = args.rollout_times
 start_epoch = args.start_epoch
 end_epoch = start_epoch + epochs
 sequence_length = args.sequence_length
@@ -55,6 +56,8 @@ model = VisionTransformer(3, 16, 128, device)
 ### Load data
 train_dataset = DataBuilder('../data/train_file.csv',sequence_length, 1)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+rollout_times = 2
 val_dataset = DataBuilder('../data/valid_file.csv',sequence_length, rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 ###
@@ -81,16 +84,23 @@ if start_epoch == 0:
 
 else: 
     # Load the checkpoint
-    checkpoint_path = "../data/Vit_checkpoint/{file_number}/epoch_{i}.pth".format(file_number=file_number,i=args.start_epoch-1)
+    checkpoint_path = f"../data/Vit_checkpoint/checkpoint_{start_epoch-1}.pth"
     checkpoint = torch.load(checkpoint_path)
+
     # Update model and optimizer with the loaded state dictionaries
+    epoch = checkpoint['epoch']
+    if start_epoch - 1 == epoch:
+        pass  
+    else: 
+        raise ValueError("Error: start_epoch minus 1 should not equal epoch")
+    
     model.load_state_dict(checkpoint['model'])
     optimizer.load_state_dict(checkpoint['optimizer'])
     scheduler.load_state_dict(checkpoint['scheduler'])
-    scaler.load_state_dict(checkpoint['scaler'])
+    scaler.load_state_dict(checkpoint['scaler'])  
 
     # Now, you can also access the train and evaluation losses if you need
-    with open("../data/Vit_checkpoint/{file_number}", "r") as f: 
+    with open("../data/Vit_checkpoint/losses.json", "r") as f: 
         loss_data = json.load(f)
     train_losses = loss_data.get('train_losses', [])
     valid_losses = loss_data.get('valid_losses', [])
@@ -98,13 +108,13 @@ else:
 
 
 ### Set save_path
-checkpoint_save_path = "../data/Vit_checkpoint/{file_number}".format(file_number=file_number)
+checkpoint_save_path = "../data/Vit_checkpoint/"
 os.makedirs(checkpoint_save_path, exist_ok=True)
 
-rec_save_path = "../data/Vit_rec/{file_number}".format(file_number=file_number)
+rec_save_path = "../data/Vit_rec/"
 os.makedirs(rec_save_path, exist_ok=True)
 
-rollout_rec_save_path = "../data/Vit_rec/{file_number}_rollout".format(file_number=file_number)
+rollout_rec_save_path = "../data/Vit_rec_rollout"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 ###
 
@@ -112,7 +122,7 @@ model.to(device)
 
 for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"): 
 
-    torch.cuda.manual_seed(epoch)
+    torch.manual_seed(epoch)
 
     model.train()
     
@@ -122,9 +132,12 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
         optimizer.zero_grad()
 
         with torch.autocast(device_type = device.type):
+
             target = sample["Target"].float().to(device)
             origin = sample["Input"].float().to(device)
-            num_mask = int(torch.rand(1).item() * mask_ratio * sequence_length)
+
+            mask_ratio = torch.rand(1).item()
+            num_mask = int(mask_ratio * sequence_length)
 
             output = model(origin, num_mask)
             loss = loss_fn(output, target)
@@ -170,10 +183,9 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
 
             for j, chunk in enumerate(target_chunks):
 
-                torch.manual_seed(i+j+i*j)
-
                 if j == 0: 
-                    num_mask = int(torch.rand(1).item() * mask_ratio * sequence_length)
+                    mask_ratio = torch.rand(1).item()
+                    num_mask = int(mask_ratio * sequence_length)
                     output = model(origin_copy, num_mask)
                 else: 
                     output = model(origin_copy, 0)
@@ -197,10 +209,3 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
     valid_losses.append(chunk_losses)
 
     save_losses(checkpoint_save_path, train_losses, valid_losses)
-
-####################################################
-    
-    model = VisionTransformer(3, 16, 128, device)
-    checkpoint = torch.load(checkpoint_path)
-    model.load_state_dict(checkpoint['model'])
-    model.to(device)
