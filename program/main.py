@@ -38,10 +38,7 @@ args = parser.parse_args()
 ### End of Argparse
 
 epochs = args.epochs
-# mask_ratio = args.mask_ratio
-# file_number = int(mask_ratio * 10)
 batch_size = args.batch_size
-# rollout_times = args.rollout_times
 start_epoch = args.start_epoch
 end_epoch = start_epoch + epochs
 sequence_length = args.sequence_length
@@ -64,28 +61,42 @@ val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
 
 ### Set Parameters
-T_start = args.epochs * 0.05 * len(train_dataset) // batch_size
-T_start = int(T_start)
 
 loss_fn = nn.MSELoss()
+T_start = epochs * 0.05 * len(train_dataset) // batch_size
+T_start = int(T_start)
+
 learning_rate = 1e-4
-optimizer = optim.AdamW(model.parameters(), lr=learning_rate, betas=(0.9, 0.95), weight_decay=0.03)
-scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_start, eta_min=1e-6, last_epoch=-1)
-scaler = torch.cuda.amp.GradScaler()
+
 ###
 
 
 ### Checkpoint
 if start_epoch == 0:
-    epochs = range(0, args.epochs)
+
+
+    optimizer = optim.AdamW(model.parameters(), lr=learning_rate, betas=(0.9, 0.95), weight_decay=0.03)
+    scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_start, eta_min=1e-6, last_epoch=-1)
+    scaler = torch.cuda.amp.GradScaler()
+
+    model.to(device)
+
+    epochs = range(0, epochs)
     train_losses = []
     valid_losses = []
     valid_losses_rollout = []
 
 else: 
+
     # Load the checkpoint
     checkpoint_path = f"../data/Vit_checkpoint/checkpoint_{start_epoch-1}.pth"
     checkpoint = torch.load(checkpoint_path)
+
+    model.to(device)
+
+    optimizer = optim.AdamW(model.parameters(), lr=1e-4, betas=(0.9, 0.95), weight_decay=0.03)
+    scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_start, eta_min=1e-6, last_epoch=-1)
+    scaler = torch.cuda.amp.GradScaler()
 
     # Update model and optimizer with the loaded state dictionaries
     epoch = checkpoint['epoch']
@@ -118,7 +129,7 @@ rollout_rec_save_path = "../data/Vit_rec_rollout"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 ###
 
-model.to(device)
+
 
 for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"): 
 

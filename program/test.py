@@ -28,6 +28,7 @@ parser.add_argument('--checkpoint-num', type=int, default=0, help='Checkpoint nu
 parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
 parser.add_argument('--rollout-times', type=int, default=64, help='Rollout times')
 parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
+parser.add_argument('--mask-ratio', type=float, default=0.1, help='Mask ratio')
 
 args = parser.parse_args()
 ### End of Argparse
@@ -36,9 +37,11 @@ checkpoint_num = args.checkpoint_num
 batch_size = args.batch_size
 rollout_times = args.rollout_times
 sequence_length = args.sequence_length
-checkpoint_path = f"../data/Vit_test/checkpoint_{checkpoint_num}.pth"
+mask_ratio = args.mask_ratio
+file_number = int(sequence_length * mask_ratio)
+checkpoint_path = f"../data/Vit_checkpoint/checkpoint_{checkpoint_num}.pth"
 
-rollout_rec_save_path = f"../data/Vit_test/"
+rollout_rec_save_path = f"../data/Vit_test/{file_number}"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 
 ### Initialize model
@@ -54,12 +57,17 @@ val_dataset = DataBuilder('../data/inner_test_file.csv',sequence_length, rollout
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 ###
 
-loss_fn = nn.MSELoss()
-test_losses = []
+mse_loss_fn = nn.MSELoss()
+mse_losses = []
+
+mae_loss_fn = nn.L1Loss()
+mae_losses = []
+
 
 model.eval()
 
-running_losses = [0 for _ in range(rollout_times)]
+mse_running_loss = [0 for _ in range(rollout_times)]
+mae_running_loss = [0 for _ in range(rollout_times)]
 
 with torch.no_grad():
 
@@ -82,19 +90,31 @@ with torch.no_grad():
                 output = model(origin_copy, 0)
             
             output_chunks.append(output)
-            loss = loss_fn(output, chunk)
-            running_losses[j] += loss.item()
+
+            mse_loss = mse_loss_fn(output, chunk)
+            mse_running_loss[j] += mse_loss.item()
+
+            mae_loss = mae_loss_fn(output, chunk)
+            mae_running_loss[j] += mae_loss.item()
 
         if i == 1: 
             plot_rollout(origin, output_chunks, target_chunks, i, rollout_rec_save_path)
 
 
-chunk_losses = []
-for running_loss in running_losses:
-    valid_loss = running_loss / len(val_loader.dataset)
-    chunk_losses.append(valid_loss)
+mse_chunk_losses = []
+for loss in mse_running_loss:
+    valid_loss = loss / len(val_loader.dataset)
+    mse_chunk_losses.append(valid_loss)
+mse_losses.append(mse_chunk_losses)
 
-test_losses.append(chunk_losses)
+with open(os.path.join(rollout_rec_save_path, 'mse_losses.json'), 'w') as f:
+    json.dump(mse_losses, f)
 
-with open(os.path.join(rollout_rec_save_path, 'test_losses.json'), 'w') as f:
-    json.dump(test_losses, f)
+mae_chunk_losses = []
+for loss in mae_running_loss:
+    valid_loss = loss / len(val_loader.dataset)
+    mae_chunk_losses.append(valid_loss)
+mae_losses.append(mae_chunk_losses)
+
+with open(os.path.join(rollout_rec_save_path, 'mae_losses.json'), 'w') as f:
+    json.dump(mae_losses, f)

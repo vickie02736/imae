@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 #$ -N imae
-#$ -l h_rt=24:00:0
+#$ -l h_rt=48:00:0
 #$ -l mem=16G
 #$ -l gpu=1
 #$ -ac allow=EFL
@@ -23,5 +23,6 @@ conda activate imae
 timestamp=$(date +%d-%m-%Y_%H:%M:%S)
 echo $timestamp
 python ../program/main.py\
-        --epochs 200
+        --epochs 400\
+        --start-epoch 200
 echo $timestamp
