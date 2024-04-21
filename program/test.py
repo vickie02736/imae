@@ -12,6 +12,7 @@ from dataset import DataBuilder
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from matplotlib import pyplot as plt
 
 
 SEED = 3409
@@ -29,19 +30,22 @@ parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
 parser.add_argument('--rollout-times', type=int, default=64, help='Rollout times')
 parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
 parser.add_argument('--mask-ratio', type=float, default=0.1, help='Mask ratio')
+parser.add_argument('--testset-csv', type=str, default='../data/inner_test_file.csv', help='Testset csv file')
+parser.add_argument('--output-dir', type=str, default='../data/Vit_test', help='Output directory')
 
 args = parser.parse_args()
 ### End of Argparse
 
 checkpoint_num = args.checkpoint_num
+checkpoint_path = f"../data/Vit_checkpoint/checkpoint_{checkpoint_num}.pth"
 batch_size = args.batch_size
 rollout_times = args.rollout_times
 sequence_length = args.sequence_length
 mask_ratio = args.mask_ratio
-file_number = int(sequence_length * mask_ratio)
-checkpoint_path = f"../data/Vit_checkpoint/checkpoint_{checkpoint_num}.pth"
-
-rollout_rec_save_path = f"../data/Vit_test/{file_number}"
+num_mask = int(sequence_length * mask_ratio)
+test_csv = args.testset_csv
+output_dir = args.output_dir
+rollout_rec_save_path = output_dir + f"/{num_mask}"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 
 ### Initialize model
@@ -53,8 +57,8 @@ model.to(device)
 ###
 
 ### Load data
-val_dataset = DataBuilder('../data/inner_test_file.csv',sequence_length, rollout_times)
-val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+val_dataset = DataBuilder(test_csv, sequence_length, rollout_times)
+val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False)
 ###
 
 mse_loss_fn = nn.MSELoss()
@@ -69,10 +73,11 @@ model.eval()
 mse_running_loss = [0 for _ in range(rollout_times)]
 mae_running_loss = [0 for _ in range(rollout_times)]
 
+
 with torch.no_grad():
 
     for i, sample in enumerate(val_loader):
-
+        
         origin = sample["Input"].float().to(device)
         origin_copy = copy.deepcopy(origin)
         target = sample["Target"].float().to(device)
@@ -83,9 +88,8 @@ with torch.no_grad():
         for j, chunk in enumerate(target_chunks):
 
             if j == 0: 
-                mask_ratio = torch.rand(1).item()
-                num_mask = int(mask_ratio * sequence_length)
                 output = model(origin_copy, num_mask)
+                masked_origin = copy.deepcopy(origin_copy)
             else: 
                 output = model(origin_copy, 0)
             
@@ -97,8 +101,39 @@ with torch.no_grad():
             mae_loss = mae_loss_fn(output, chunk)
             mae_running_loss[j] += mae_loss.item()
 
-        if i == 1: 
-            plot_rollout(origin, output_chunks, target_chunks, i, rollout_rec_save_path)
+            origin_copy = copy.deepcopy(output)
+
+        _, ax = plt.subplots(rollout_times*2+2, 10, figsize=(20, rollout_times*4+2))
+
+        for m in range(10): 
+            # visualise input
+            ax[0][m].imshow(origin[0][m][0].cpu().detach().numpy())
+            ax[0][m].set_xticks([])
+            ax[0][m].set_yticks([])
+            ax[0][m].set_title("Timestep {timestep} (Input)".format(timestep=m+1), fontsize=10)
+            
+            ax[1][m].imshow(masked_origin[0][m][0].cpu().detach().numpy())
+            ax[1][m].set_xticks([])
+            ax[1][m].set_yticks([])
+            ax[1][m].set_title("Timestep {timestep} (Input)".format(timestep=m+1), fontsize=10)
+
+        for k in range(rollout_times): 
+
+            for m in range(10):
+                # visualise output
+                ax[2*k+2][m].imshow(output_chunks[k][0][m][0].cpu().detach().numpy())
+                ax[2*k+2][m].set_xticks([])
+                ax[2*k+2][m].set_yticks([])
+                ax[2*k+2][m].set_title("Timestep {timestep} (Prediction)".format(timestep=m+11+k*10), fontsize=10)
+                # visualise target
+                ax[2*k+3][m].imshow(target_chunks[k][0][m][0].cpu().detach().numpy())
+                ax[2*k+3][m].set_xticks([])
+                ax[2*k+3][m].set_yticks([])
+                ax[2*k+3][m].set_title("Timestep {timestep} (Target)".format(timestep=m+11+k*10), fontsize=10)
+            
+        plt.tight_layout()
+        plt.savefig(os.path.join(rollout_rec_save_path + f"/{i}.png"))
+        plt.close()
 
 
 mse_chunk_losses = []

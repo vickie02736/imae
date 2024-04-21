@@ -40,11 +40,10 @@ class VisionTransformer(nn.Module):
         self.seq_conv = torch.vmap(self.conv)
 
 
-    def forward(self, x, num_mask):
+    def forward(self, x, num_mask): 
 
-        if num_mask != 0: 
+        if num_mask != 0:
 
-            # random masking
             weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
             idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device) 
             batch_random_mask = torch.vmap(self.random_mask)

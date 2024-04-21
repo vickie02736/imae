@@ -6,7 +6,7 @@ import pandas as pd
 import ast  
 import torch
 import sys
-sys.append("..")
+sys.path.append("..")
 
 # calculate the min and max of the training dataset, for nomalization
 def calculate_min_max():
