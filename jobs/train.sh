@@ -1,10 +1,10 @@
 #!/bin/bash -l
 
 #$ -N imae
-#$ -l h_rt=48:00:0
+#$ -l h_rt=72:00:0
 #$ -l mem=16G
 #$ -l gpu=1
-#$ -ac allow=EFL
+#$ -ac allow=L
 
 #$ -m be
 #$ -M uceckz0@ucl.ac.uk
@@ -24,5 +24,5 @@ timestamp=$(date +%d-%m-%Y_%H:%M:%S)
 echo $timestamp
 python ../program/main.py\
         --epochs 400\
-        --start-epoch 200
+        --start-epoch 471
 echo $timestamp

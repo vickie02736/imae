@@ -26,11 +26,8 @@ torch.backends.cudnn.deterministic = True
 
 ### Argparse
 parser = argparse.ArgumentParser(description='Train Vision Transformer')
-
-# parser.add_argument('--mask-ratio', type=float, default=0.9, help='Masking ratio')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs')
 parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
-# parser.add_argument('--rollout-times', type=int, default=1, help='Rollout times')
 parser.add_argument('--start-epoch', type=int, default=0, help='start epoch after last training')
 parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
 
