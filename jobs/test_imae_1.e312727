@@ -1,0 +1,4 @@
+usage: test.py [-h] [--checkpoint-num CHECKPOINT_NUM]
+               [--batch-size BATCH_SIZE] [--rollout-times ROLLOUT_TIMES]
+               [--sequence-length SEQUENCE_LENGTH] [--mask-ratio MASK_RATIO]
+test.py: error: argument --mask-ratio: invalid float value: '0.1echo'

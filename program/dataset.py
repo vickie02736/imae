@@ -5,10 +5,12 @@ from torch.utils.data import Dataset
 import pandas as pd
 import ast  
 import torch
+import sys
+sys.append("..")
 
 # calculate the min and max of the training dataset, for nomalization
 def calculate_min_max():
-    df = pd.read_csv("/home/uceckz0/Scratch/imae/train_file.csv")
+    df = pd.read_csv("../dataset_split/train_file.csv")
     arr = []
     for i in range(len(df)):
         full_sequence = np.load(df["Address"].iloc[i], allow_pickle=True, mmap_mode='r')

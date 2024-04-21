@@ -51,11 +51,11 @@ model = VisionTransformer(3, 16, 128, device)
 
 
 ### Load data
-train_dataset = DataBuilder('../data/train_file.csv',sequence_length, 1)
+train_dataset = DataBuilder('../dataset_split/train_file.csv',sequence_length, 1)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
 rollout_times = 2
-val_dataset = DataBuilder('../data/valid_file.csv',sequence_length, rollout_times)
+val_dataset = DataBuilder('../dataset_split/valid_file.csv',sequence_length, rollout_times)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 ###
 
