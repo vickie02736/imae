@@ -32,7 +32,7 @@ parser.add_argument('--sequence-length', type=int, default=10, help='Sequence le
 parser.add_argument('--mask-ratio', type=float, default=0.1, help='Mask ratio')
 # parser.add_argument('--testset-csv', type=str, default='../dataset_split/inner_test_file.csv', help='Testset csv file')
 # parser.add_argument('--output-dir', type=str, default='../data/Vit_test', help='Output directory')
-parser.add_argument('--task', choices=['inner', 'outer'],
+parser.add_argument('--task', choices=['inner', 'outer', 'inner_rollout', 'outer_rollout'],
                     default='inner', help='Task type')
 
 args = parser.parse_args()
@@ -50,12 +50,14 @@ num_mask = int(sequence_length * mask_ratio)
 # test_csv = args.testset_csv
 # output_dir = args.output_dir
 task = args.task
-if task == 'inner':
-    test_csv = '../dataset_split/inner_test_file.csv'
-    output_dir = '../data/Vit_test'
-else:
-    test_csv = '../dataset_split/outer_test_file.csv'
-    output_dir = '../data/Vit_test_outer'
+test_csv = f'../dataset_split/{task}_test_file.csv'
+output_dir = f'../data/Vit_{task}'
+# if task == 'inner':
+#     test_csv = '../dataset_split/inner_test_file.csv'
+#     output_dir = '../data/Vit_test'
+# else:
+#     test_csv = '../dataset_split/outer_test_file.csv'
+#     output_dir = '../data/Vit_test_outer'
 
 rollout_rec_save_path = output_dir + f"/{num_mask}"
 os.makedirs(rollout_rec_save_path, exist_ok=True)

@@ -27,10 +27,10 @@ echo $timestamp
 for i in {1..9}; do
     mask_ratio=$(echo "scale=1; $i / 10" | bc)
     python ../program/test.py\
-        --checkpoint-num 470\
+        --checkpoint-num 586\
         --rollout-times 5\
         --mask-ratio $mask_ratio\
-        --task outer
+        --task inner_rollout
 done
 
 echo $timestamps

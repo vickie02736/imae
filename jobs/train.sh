@@ -23,6 +23,5 @@ conda activate imae
 timestamp=$(date +%d-%m-%Y_%H:%M:%S)
 echo $timestamp
 python ../program/main.py\
-        --epochs 400\
-        --start-epoch 471
+        --epochs 600
 echo $timestamp
