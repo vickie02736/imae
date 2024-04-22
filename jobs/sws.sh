@@ -31,7 +31,7 @@ do
         --R $R\
         --Hp $Hp\
         --root-path ../data/\
-        --task-name shallow_water_simulation_rollout_test\
+        --task-name shallow_water_simulation_rollout_test
         --iteration-times 20000
     echo echo "Finished simulation with R = $R and Hp = $Hp at $(date +%d-%m-%Y_%H:%M:%S)"
 done

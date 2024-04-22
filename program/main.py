@@ -126,7 +126,7 @@ rollout_rec_save_path = "../data/Vit_rec_rollout"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 ###
 
-best_loss = 0.0
+best_loss = float('inf')
 best_epoch = 0
 
 for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"): 
@@ -214,7 +214,6 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
     for running_loss in running_losses:
         valid_loss = running_loss / len(val_loader.dataset)
         chunk_losses.append(valid_loss)
-
 
     current_loss = chunk_losses[0]
     if best_loss > current_loss:
