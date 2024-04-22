@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N test_inner
+#$ -N test_outer
 #$ -l h_rt=24:00:00
 #$ -l mem=16G
 #$ -l gpu=1
@@ -30,7 +30,7 @@ for i in {1..9}; do
         --checkpoint-num 470\
         --rollout-times 5\
         --mask-ratio $mask_ratio\
-        --type inner
+        --task outer
 done
 
 echo $timestamps

@@ -1,9 +1,9 @@
 import json
 
 
-file_path = root_path_data + "file_list.json"
+all_file= "./all_file.json"
 
-with open(file_path, 'r') as infile:
+with open(all_file, 'r') as infile:
     data = json.load(infile) # len(data) = 266
 
 position_twin = ['R_36_Hp_2']
@@ -41,5 +41,5 @@ file_data_pairs = {
 }
 
 for filename, data_dict in file_data_pairs.items():
-    with open(root_path_data + filename, 'w') as outfile:
+    with open(filename, 'w') as outfile:
         json.dump(data_dict, outfile)

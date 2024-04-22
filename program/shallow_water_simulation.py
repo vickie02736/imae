@@ -18,7 +18,22 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 # from scipy.interpolate import griddata
 import os
+import argparse
 
+
+parser = argparse.ArgumentParser(description='Shallow Water Simulation')
+parser.add_argument('--R', type=int, help='R')
+parser.add_argument('--Hp', type=int, help='Hp')
+parser.add_argument('--root-path', type=str, default= '../data/', help='root path')
+parser.add_argument('--task-name', type=str, help='task name')
+parser.add_argument('--iteration-times', type=int, default=10000, help='iteration times')
+args = parser.parse_args()
+
+R = args.R
+Hp = args.Hp
+root_path = args.root_path
+task_name = args.task_name
+iteration_times = args.iteration_times
 
 def x_to_y(X): # averaging in 2*2 windows (4 pixels)
     dim = X.shape[0]
@@ -154,9 +169,8 @@ class shallow(object):
     
 
 
-def simulation(R, Hp_hat, root_path):
+def simulation(R, Hp_hat, iteration_times, root_path, task_name):
     
-    iteration_times= 20000
 
     SW = shallow(N=128,px=72,py=80,R=R,Hp=Hp_hat/100,b=0.2)
 
@@ -195,14 +209,13 @@ def simulation(R, Hp_hat, root_path):
 
     final_npy = np.concatenate(data_list, axis=0) # concatenate all array in this list, there shape is (t,3,128,128)   
 
-    save_dir = os.path.join(root_path, 'shallow_water_simulation_rollout_test')
+    save_dir = os.path.join(root_path, task_name)
     os.makedirs(save_dir, exist_ok=True)
     file_name = f'R_{R}_Hp_{Hp_hat}'
     save_path = os.path.join(save_dir, file_name)
     np.save(save_path, final_npy)
     
 
-root_path = '../data/'
     
 # R_list = [36, 49, 64, 72, 81, 90, 100, 110, 121, 132, 144, 160]
 # Hp_list_hat = [x for x in range(2, 21)] # Here Hp_hat = Hp*100
@@ -211,4 +224,4 @@ root_path = '../data/'
 #     for Hp in tqdm(Hp_list_hat): 
 #         simulation(R, Hp, root_path)
 
-simulation(72, 7, root_path)
+simulation(R, Hp, iteration_times, root_path, task_name)
