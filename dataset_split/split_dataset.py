@@ -53,12 +53,16 @@ file_data_pairs = {
 
 for filename, data_dict in file_data_pairs.items():
 
-    with open(filename+".json", 'w') as outfile:
+    with open(f"./json/{filename}.json", 'w') as file:
         files = list(data_dict)
         file_names = [os.path.splitext(i)[0] for i in files]
         file_paths = [os.path.join(data_dir, i+".npy") for i in files]
         file_list = dict(zip(file_names, file_paths))
-        json.dump(file_list, outfile)
+        json.dump(file_list, file)
+
+    with open(f"./txt/{filename}.txt", 'w') as file:
+        for item in data_dict:
+            file.write(item + '\n')
 
     data = pd.DataFrame(list(file_list.items()), columns=['Key', 'Address'])
     data[['R', 'Hp']] = data['Key'].str.extract(r'R_(\d+)_Hp_(\d+)')
@@ -67,4 +71,4 @@ for filename, data_dict in file_data_pairs.items():
     new_rows = [row.tolist() + [i] for _, row in data.iterrows() for i in range(0, 200)] # 200 is the number of timesteps
     data = pd.DataFrame(new_rows, columns=['Key', 'Address', 'R', 'Hp', 'Pos'])
     data['Label'] = [[a, b, c] for a, b, c in zip(data['R'], data['Hp'], data['Pos'])]
-    data.to_csv(filename+".csv", index=False)
+    data.to_csv(f"./csv/{filename}.csv", index=False)
