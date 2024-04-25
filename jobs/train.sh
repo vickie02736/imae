@@ -1,10 +1,10 @@
 #!/bin/bash -l
 
-#$ -N imae
+#$ -N imae_c
 #$ -l h_rt=72:00:0
 #$ -l mem=16G
 #$ -l gpu=1
-#$ -ac allow=L
+#$ -ac allow=EFL
 
 #$ -m be
 #$ -M uceckz0@ucl.ac.uk
@@ -23,5 +23,6 @@ conda activate imae
 timestamp=$(date +%d-%m-%Y_%H:%M:%S)
 echo $timestamp
 python ../program/main.py\
-        --epochs 600
+        --epochs 250\
+        --mask-type consecutive
 echo $timestamp

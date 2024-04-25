@@ -53,7 +53,7 @@ class DataBuilder(Dataset):
             filtered_df = df[df["Key"] == unique_keys[i]] # Take each video
             # sorted each sequence
             sorted_df = filtered_df.sort_values(by = ["Pos"])
-            clips = self.cut_clips(sorted_df, self.clip_length, self.rollout_times)
+            clips = self.cut_clips(sorted_df)
             all_clips.extend(clips)
         self.all_clips = all_clips
             
@@ -94,7 +94,7 @@ class DataBuilder(Dataset):
         return {"R": param_R, "Hp": param_Hp, "Pos": param_Pos, "Label": param_Label, 
                 "Input": input_sequence, "Target": target_sequence, "Sub_S": sub_sequance}
     
-    def cut_clips(self, sorted_df, clip_length, rollout_times):
+    def cut_clips(self, sorted_df):
         clips = []
         for start in range(len(sorted_df)- self.total_length + 1): 
             end = start + self.total_length

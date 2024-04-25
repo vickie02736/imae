@@ -48,8 +48,9 @@ file_data_pairs = {
     'inner_test_file': inner_test_keys,
     'outer_test_file': outer_test_keys,
     'valid_file': valid_keys,
-    'train_file': train_keys
+    'train_file': train_keys, 
 }
+
 
 for filename, data_dict in file_data_pairs.items():
 
@@ -68,7 +69,7 @@ for filename, data_dict in file_data_pairs.items():
     data[['R', 'Hp']] = data['Key'].str.extract(r'R_(\d+)_Hp_(\d+)')
     data['R'] = pd.to_numeric(data['R'])
     data['Hp'] = pd.to_numeric(data['Hp'])
-    new_rows = [row.tolist() + [i] for _, row in data.iterrows() for i in range(0, 200)] # 200 is the number of timesteps
+    new_rows = [row.tolist() + [i] for _, row in data.iterrows() for i in range(0, 100)]
     data = pd.DataFrame(new_rows, columns=['Key', 'Address', 'R', 'Hp', 'Pos'])
     data['Label'] = [[a, b, c] for a, b, c in zip(data['R'], data['Hp'], data['Pos'])]
     data.to_csv(f"./csv/{filename}.csv", index=False)

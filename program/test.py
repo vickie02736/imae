@@ -6,7 +6,7 @@ import random
 import numpy as np
 
 from model import VisionTransformer
-from utils import plot_rollout
+# from utils import plot_rollout
 from dataset import DataBuilder
 
 import torch
@@ -22,45 +22,47 @@ torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 
+def int_or_string(value):
+    if value == "best":
+        return value
+    else:
+        return int(value)
 
 ### Argparse
-parser = argparse.ArgumentParser(description='Train Vision Transformer')
-parser.add_argument('--checkpoint-num', type=int, default=0, help='Checkpoint number')
+parser = argparse.ArgumentParser(description='Test Vision Transformer')
+parser.add_argument('--checkpoint', type=int_or_string, default=0, help='Checkpoint ')
 parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
 parser.add_argument('--rollout-times', type=int, default=64, help='Rollout times')
 parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
 parser.add_argument('--mask-ratio', type=float, default=0.1, help='Mask ratio')
-# parser.add_argument('--testset-csv', type=str, default='../dataset_split/inner_test_file.csv', help='Testset csv file')
-# parser.add_argument('--output-dir', type=str, default='../data/Vit_test', help='Output directory')
 parser.add_argument('--task', choices=['inner', 'outer', 'inner_rollout', 'outer_rollout'],
                     default='inner', help='Task type')
+parser.add_argument('--mask-type', choices=['random', 'consecutive'],
+                    default='random', help='Mask type')
 
 args = parser.parse_args()
 ### End of Argparse
 
-checkpoint_num = args.checkpoint_num
-checkpoint_path = f"../data/Vit_checkpoint/checkpoint_{checkpoint_num}.pth"
 
 batch_size = args.batch_size
 rollout_times = args.rollout_times
 sequence_length = args.sequence_length
 mask_ratio = args.mask_ratio
 num_mask = int(sequence_length * mask_ratio)
+mask_type = args.mask_type
 
-# test_csv = args.testset_csv
-# output_dir = args.output_dir
 task = args.task
-test_csv = f'../dataset_split/{task}_test_file.csv'
-output_dir = f'../data/Vit_{task}'
-# if task == 'inner':
-#     test_csv = '../dataset_split/inner_test_file.csv'
-#     output_dir = '../data/Vit_test'
-# else:
-#     test_csv = '../dataset_split/outer_test_file.csv'
-#     output_dir = '../data/Vit_test_outer'
+test_csv = f'../dataset_split/csv/{task}_test_file.csv'
+output_dir = f'../data/{mask_type}/Vit_{task}'
 
 rollout_rec_save_path = output_dir + f"/{num_mask}"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
+
+checkpoint = args.checkpoint
+if checkpoint == "best":
+    checkpoint_path = f'../data/{mask_type}/best_checkpoint.tar'
+else: 
+    checkpoint_path = f"../data/{mask_type}/Vit_checkpoint/checkpoint_{checkpoint}.pth"
 
 ### Initialize model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -72,7 +74,7 @@ model.to(device)
 
 ### Load data
 val_dataset = DataBuilder(test_csv, sequence_length, rollout_times)
-val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False)
+val_loader = DataLoader(val_dataset, batch_size=10, shuffle=False)
 ###
 
 mse_loss_fn = nn.MSELoss()
@@ -96,6 +98,9 @@ with torch.no_grad():
         origin_copy = copy.deepcopy(origin)
         target = sample["Target"].float().to(device)
         target_chunks = torch.chunk(target, rollout_times, dim=1)
+        pos = sample["Pos"][0]
+        R = sample["R"][0]
+        Hp = sample["Hp"][0]
         
         output_chunks = []
 
@@ -116,38 +121,42 @@ with torch.no_grad():
             mae_running_loss[j] += mae_loss.item()
 
             origin_copy = copy.deepcopy(output)
+        
+        if i == 8 or i == 9 or i == 10: 
 
-        # _, ax = plt.subplots(rollout_times*2+2, 10, figsize=(20, rollout_times*4+2))
+            _, ax = plt.subplots(rollout_times*2+2, 10, figsize=(20, rollout_times*4+2))
 
-        # for m in range(10): 
-        #     # visualise input
-        #     ax[0][m].imshow(origin[0][m][0].cpu().detach().numpy())
-        #     ax[0][m].set_xticks([])
-        #     ax[0][m].set_yticks([])
-        #     ax[0][m].set_title("Timestep {timestep} (Input)".format(timestep=m+1), fontsize=10)
-            
-        #     ax[1][m].imshow(masked_origin[0][m][0].cpu().detach().numpy())
-        #     ax[1][m].set_xticks([])
-        #     ax[1][m].set_yticks([])
-        #     ax[1][m].set_title("Timestep {timestep} (Input)".format(timestep=m+1), fontsize=10)
+            for m in range(10): 
+                # visualise input
+                ax[0][m].imshow(origin[0][m][0].cpu().detach().numpy())
+                ax[0][m].set_xticks([])
+                ax[0][m].set_yticks([])
+                # ax[0][m].set_title("Timestep {timestep} (Input)".format(timestep=m+1), fontsize=10)
+                ax[0][m].set_title("Timestep {timestep} (Input)".format(timestep=int(pos[m]+1)), fontsize=10)
+                
+                ax[1][m].imshow(masked_origin[0][m][0].cpu().detach().numpy())
+                ax[1][m].set_xticks([])
+                ax[1][m].set_yticks([])
+                ax[1][m].set_title("Timestep {timestep} (Input)".format(timestep=int(pos[m])+1), fontsize=10)
 
-        # for k in range(rollout_times): 
+            for k in range(rollout_times): 
 
-        #     for m in range(10):
-        #         # visualise output
-        #         ax[2*k+2][m].imshow(output_chunks[k][0][m][0].cpu().detach().numpy())
-        #         ax[2*k+2][m].set_xticks([])
-        #         ax[2*k+2][m].set_yticks([])
-        #         ax[2*k+2][m].set_title("Timestep {timestep} (Prediction)".format(timestep=m+11+k*10), fontsize=10)
-        #         # visualise target
-        #         ax[2*k+3][m].imshow(target_chunks[k][0][m][0].cpu().detach().numpy())
-        #         ax[2*k+3][m].set_xticks([])
-        #         ax[2*k+3][m].set_yticks([])
-        #         ax[2*k+3][m].set_title("Timestep {timestep} (Target)".format(timestep=m+11+k*10), fontsize=10)
-            
-        # plt.tight_layout()
-        # plt.savefig(os.path.join(rollout_rec_save_path + f"/{i}.png"))
-        # plt.close()
+                for m in range(10):
+                    # visualise output
+                    ax[2*k+2][m].imshow(output_chunks[k][0][m][0].cpu().detach().numpy())
+                    ax[2*k+2][m].set_xticks([])
+                    ax[2*k+2][m].set_yticks([])
+                    ax[2*k+2][m].set_title("Timestep {timestep} (Prediction)".format(timestep=int(pos[m])+11+k*10), fontsize=10)
+                    # visualise target
+                    ax[2*k+3][m].imshow(target_chunks[k][0][m][0].cpu().detach().numpy())
+                    ax[2*k+3][m].set_xticks([])
+                    ax[2*k+3][m].set_yticks([])
+                    ax[2*k+3][m].set_title("Timestep {timestep} (Target)".format(timestep=int(pos[m])+11+k*10), fontsize=10)
+                
+            plt.tight_layout()
+            plt.title(f"R_{R}_Hp_{Hp}")
+            plt.savefig(os.path.join(rollout_rec_save_path + f"/{i}.png"))
+            plt.close()
 
 
 mse_chunk_losses = []

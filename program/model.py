@@ -40,15 +40,20 @@ class VisionTransformer(nn.Module):
         self.seq_conv = torch.vmap(self.conv)
 
 
-    def forward(self, x, num_mask): 
+    def forward(self, x, num_mask, mask_type='random'): 
 
         if num_mask != 0:
 
-            weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
-            idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device) 
-            batch_random_mask = torch.vmap(self.random_mask)
+            if mask_type == 'random':
+                weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
+                idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device)
 
-            x = batch_random_mask(x, idx)
+            elif mask_type == 'consecutive':
+                idx = torch.arange(0, num_mask-1)
+                idx = idx.unsqueeze(0).repeat(x.shape[0], 1).to(x.device)
+
+            batch_mask = torch.vmap(self.mask)
+            x = batch_mask(x, idx)
 
         # encode
         x = self.batch_forward(x)
@@ -112,7 +117,7 @@ class VisionTransformer(nn.Module):
         x = seq_unpatchify(x)
         return x
     
-    def random_mask(self, x, idx): 
+    def mask(self, x, idx): 
         self.random_tensor = self.random_tensor.to(x.device)
         x[idx] = self.random_tensor
         return x

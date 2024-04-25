@@ -13,6 +13,8 @@ from pylab import *
 import numpy as np
 import os
 import argparse
+import json
+import pandas as pd
 
 
 parser = argparse.ArgumentParser(description='Shallow Water Simulation')
@@ -20,6 +22,7 @@ parser.add_argument('--R', type=int, help='R')
 parser.add_argument('--Hp', type=int, help='Hp')
 parser.add_argument('--root-path', type=str, default= '../data/', help='root path')
 parser.add_argument('--task-name', type=str, help='task name')
+parser.add_argument('--dataset-name', type=str, help='dataset name')
 parser.add_argument('--iteration-times', type=int, default=10000, help='iteration times')
 args = parser.parse_args()
 
@@ -28,6 +31,7 @@ Hp = args.Hp
 root_path = args.root_path
 task_name = args.task_name
 iteration_times = args.iteration_times
+dataset_name = args.dataset_name
 
 def x_to_y(X): # averaging in 2*2 windows (4 pixels)
     dim = X.shape[0]
@@ -163,6 +167,8 @@ class shallow(object):
     
 
 
+pairs = {}
+
 def simulation(R, Hp_hat, iteration_times, root_path, task_name):
     
 
@@ -208,14 +214,20 @@ def simulation(R, Hp_hat, iteration_times, root_path, task_name):
     file_name = f'R_{R}_Hp_{Hp_hat}'
     save_path = os.path.join(save_dir, file_name)
     np.save(save_path, final_npy)
-    
 
-    
-# R_list = [36, 49, 64, 72, 81, 90, 100, 110, 121, 132, 144, 160]
-# Hp_list_hat = [x for x in range(2, 21)] # Here Hp_hat = Hp*100
-
-# for R in tqdm(R_list): 
-#     for Hp in tqdm(Hp_list_hat): 
-#         simulation(R, Hp, root_path)
+    pairs[file_name] = f"{save_path}.npy"
 
 simulation(R, Hp, iteration_times, root_path, task_name)
+
+with open(f"../dataset_split/json/{dataset_name}.json", 'w') as file:
+    json.dump(pairs, file)
+
+data = pd.DataFrame(list(pairs.items()), columns=['Key', 'Address'])
+data[['R', 'Hp']] = data['Key'].str.extract(r'R_(\d+)_Hp_(\d+)')
+data['R'] = pd.to_numeric(data['R'])
+data['Hp'] = pd.to_numeric(data['Hp'])
+t = int(iteration_times/100)
+new_rows = [row.tolist() + [i] for _, row in data.iterrows() for i in range(0, t)] 
+data = pd.DataFrame(new_rows, columns=['Key', 'Address', 'R', 'Hp', 'Pos'])
+data['Label'] = [[a, b, c] for a, b, c in zip(data['R'], data['Hp'], data['Pos'])]
+data.to_csv(f"../dataset_split/csv/{dataset_name}.csv", index=False)

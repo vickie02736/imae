@@ -30,6 +30,8 @@ parser.add_argument('--epochs', type=int, default=200, help='Number of epochs')
 parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
 parser.add_argument('--start-epoch', type=int, default=0, help='start epoch after last training')
 parser.add_argument('--sequence-length', type=int, default=10, help='Sequence length')
+parser.add_argument('--mask-type', choices=['random', 'consecutive'],
+                    default='random', help='Mask type')
 
 args = parser.parse_args()
 ### End of Argparse
@@ -39,7 +41,7 @@ batch_size = args.batch_size
 start_epoch = args.start_epoch
 end_epoch = start_epoch + epochs
 sequence_length = args.sequence_length
-
+mask_type = args.mask_type
 
 ### Initialize model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -48,11 +50,10 @@ model = VisionTransformer(3, 16, 128, device)
 
 
 ### Load data
-train_dataset = DataBuilder('../dataset_split/train_file.csv',sequence_length, 1)
+train_dataset = DataBuilder('../dataset_split/csv/train_file.csv',sequence_length, 1)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-rollout_times = 2
-val_dataset = DataBuilder('../dataset_split/valid_file.csv',sequence_length, rollout_times)
+val_dataset = DataBuilder('../dataset_split/csv/valid_file.csv',sequence_length, 2)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 ###
 
@@ -86,7 +87,7 @@ if start_epoch == 0:
 else: 
 
     # Load the checkpoint
-    checkpoint_path = f"../data/Vit_checkpoint/checkpoint_{start_epoch-1}.pth"
+    checkpoint_path = f"../data/{mask_type}/Vit_checkpoint/checkpoint_{start_epoch-1}.pth"
     checkpoint = torch.load(checkpoint_path)
 
     model.to(device)
@@ -108,7 +109,7 @@ else:
     scaler.load_state_dict(checkpoint['scaler'])  
 
     # Now, you can also access the train and evaluation losses if you need
-    with open("../data/Vit_checkpoint/losses.json", "r") as f: 
+    with open(f"../data/{mask_type}/Vit_checkpoint/losses.json", "r") as f: 
         loss_data = json.load(f)
     train_losses = loss_data.get('train_losses', [])
     valid_losses = loss_data.get('valid_losses', [])
@@ -116,13 +117,13 @@ else:
 
 
 ### Set save_path
-checkpoint_save_path = "../data/Vit_checkpoint/"
+checkpoint_save_path =f"../data/{mask_type}/Vit_checkpoint/"
 os.makedirs(checkpoint_save_path, exist_ok=True)
 
-rec_save_path = "../data/Vit_rec/"
+rec_save_path = f"../data/{mask_type}/Vit_rec/"
 os.makedirs(rec_save_path, exist_ok=True)
 
-rollout_rec_save_path = "../data/Vit_rec_rollout"
+rollout_rec_save_path = f"../data/{mask_type}/Vit_rec_rollout"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 ###
 
@@ -148,7 +149,7 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
             mask_ratio = torch.rand(1).item()
             num_mask = int(mask_ratio * sequence_length)
 
-            output = model(origin, num_mask)
+            output = model(origin, num_mask, mask_type)
             loss = loss_fn(output, target)
 
         scaler.scale(loss).backward(retain_graph=True) # Scales loss
@@ -178,7 +179,7 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
 
     model.eval()
 
-    running_losses = [0 for _ in range(rollout_times)]
+    running_losses = [0 for _ in range(2)]
     with torch.no_grad():
 
         for i, sample in enumerate(val_loader):
@@ -186,7 +187,7 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
             origin = sample["Input"].float().to(device)
             origin_copy = copy.deepcopy(origin)
             target = sample["Target"].float().to(device)
-            target_chunks = torch.chunk(target, rollout_times, dim=1)
+            target_chunks = torch.chunk(target, 2, dim=1)
             
             output_chunks = []
 
@@ -195,9 +196,9 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
                 if j == 0: 
                     mask_ratio = torch.rand(1).item()
                     num_mask = int(mask_ratio * sequence_length)
-                    output = model(origin_copy, num_mask)
+                    output = model(origin_copy, num_mask, mask_type)
                 else: 
-                    output = model(origin_copy, 0)
+                    output = model(origin_copy, 0, mask_type)
                 
                 output_chunks.append(output)
                 loss = loss_fn(output, chunk)
@@ -219,9 +220,9 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
     if best_loss > current_loss:
         best_loss = current_loss
         best_epoch = epoch
-        torch.save(save_dict, f'./best_checkpoint.tar')
-        torch.save(save_dict, f'./best_checkpoint.pth')
-        torch.save(save_dict, f'./best_checkpoint.pth.tar')
+        torch.save(save_dict, f'../data/{mask_type}/best_checkpoint.tar')
+        torch.save(save_dict, f'../data/{mask_type}/best_checkpoint.pth')
+        torch.save(save_dict, f'../data/{mask_type}/best_checkpoint.pth.tar')
 
     valid_losses.append(chunk_losses)
 

@@ -15,10 +15,8 @@ hostname
 source /home/uceckz0/miniconda3/bin/activate
 conda activate imae
 
-declare -a pairs=('R_72_Hp_3' 'R_121_Hp_3'
-                  'R_72_Hp_7' 'R_121_Hp_7'
-                  'R_72_Hp_11' 'R_121_Hp_11'
-                  'R_72_Hp_15' 'R_121_Hp_15')
+file_path="../dataset_split/txt/inner_test_file.txt"
+mapfile -t pairs < "$file_path"
 
 for pair in "${pairs[@]}"
 do
@@ -26,12 +24,12 @@ do
     R=$(echo "$pair" | sed 's/R_\([0-9]*\)_Hp_[0-9]*/\1/')
     Hp=$(echo "$pair" | sed 's/R_[0-9]*_Hp_\([0-9]*\)/\1/')
 
-    echo "Starting simulation with R = $R and Hp = $Hp at $(date +%d-%m-%Y_%H:%M:%S)"
+    echo "R = $R and Hp = $Hp $(date +%d-%m-%Y_%H:%M:%S)"
     python ../program/shallow_water_simulation.py\
         --R $R\
         --Hp $Hp\
         --root-path ../data/\
-        --task-name shallow_water_simulation_rollout_test
+        --task-name shallow_water_simulation_inner_rollout\
+        --dataset-name inner_rollout_test_file\
         --iteration-times 20000
-    echo echo "Finished simulation with R = $R and Hp = $Hp at $(date +%d-%m-%Y_%H:%M:%S)"
 done
