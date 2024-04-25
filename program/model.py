@@ -49,7 +49,7 @@ class VisionTransformer(nn.Module):
                 idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device)
 
             elif mask_type == 'consecutive':
-                idx = torch.arange(0, num_mask-1)
+                idx = torch.arange(0, num_mask)
                 idx = idx.unsqueeze(0).repeat(x.shape[0], 1).to(x.device)
 
             batch_mask = torch.vmap(self.mask)

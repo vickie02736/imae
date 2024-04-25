@@ -85,9 +85,8 @@ if start_epoch == 0:
     valid_losses_rollout = []
 
 else: 
-
     # Load the checkpoint
-    checkpoint_path = f"../data/{mask_type}/Vit_checkpoint/checkpoint_{start_epoch-1}.pth"
+    checkpoint_path = f"../data/checkpoint_{mask_type}/checkpoint_{start_epoch-1}.pth"
     checkpoint = torch.load(checkpoint_path)
 
     model.to(device)
@@ -109,7 +108,7 @@ else:
     scaler.load_state_dict(checkpoint['scaler'])  
 
     # Now, you can also access the train and evaluation losses if you need
-    with open(f"../data/{mask_type}/Vit_checkpoint/losses.json", "r") as f: 
+    with open(f"../data/Vit_checkpoint_{mask_type}/losses.json", "r") as f: 
         loss_data = json.load(f)
     train_losses = loss_data.get('train_losses', [])
     valid_losses = loss_data.get('valid_losses', [])
@@ -117,13 +116,13 @@ else:
 
 
 ### Set save_path
-checkpoint_save_path =f"../data/{mask_type}/Vit_checkpoint/"
+checkpoint_save_path =f"../data/checkpoint_{mask_type}"
 os.makedirs(checkpoint_save_path, exist_ok=True)
 
-rec_save_path = f"../data/{mask_type}/Vit_rec/"
-os.makedirs(rec_save_path, exist_ok=True)
+# rec_save_path = f"../data/{mask_type}_rec/Vit_rec/"
+# os.makedirs(rec_save_path, exist_ok=True)
 
-rollout_rec_save_path = f"../data/{mask_type}/Vit_rec_rollout"
+rollout_rec_save_path = f"../data/rec_{mask_type}/valid"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 ###
 
@@ -208,7 +207,7 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
             if i == 1:
                 a = output_chunks[0].unsqueeze(0)
                 b = target_chunks[0].unsqueeze(0)
-                plot_rollout(origin, a, b, epoch, rec_save_path)
+                # plot_rollout(origin, a, b, epoch, rec_save_path)
                 plot_rollout(origin, output_chunks, target_chunks, epoch, rollout_rec_save_path)
     
     chunk_losses = []
@@ -220,9 +219,9 @@ for epoch in tqdm(range(start_epoch, end_epoch), desc="Epoch progress"):
     if best_loss > current_loss:
         best_loss = current_loss
         best_epoch = epoch
-        torch.save(save_dict, f'../data/{mask_type}/best_checkpoint.tar')
-        torch.save(save_dict, f'../data/{mask_type}/best_checkpoint.pth')
-        torch.save(save_dict, f'../data/{mask_type}/best_checkpoint.pth.tar')
+        torch.save(save_dict, os.path.join(checkpoint_save_path, f'{mask_type}_best_checkpoint.tar'))
+        torch.save(save_dict, os.path.join(checkpoint_save_path, f'{mask_type}_best_checkpoint.pth'))
+        torch.save(save_dict, os.path.join(checkpoint_save_path, f'{mask_type}_best_checkpoint..pth.tar'))
 
     valid_losses.append(chunk_losses)
 

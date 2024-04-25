@@ -41,35 +41,43 @@ parser.add_argument('--mask-type', choices=['random', 'consecutive'],
                     default='random', help='Mask type')
 
 args = parser.parse_args()
-### End of Argparse
+## End of Argparse
 
 
-batch_size = args.batch_size
 rollout_times = args.rollout_times
 sequence_length = args.sequence_length
 mask_ratio = args.mask_ratio
-num_mask = int(sequence_length * mask_ratio)
 mask_type = args.mask_type
-
 task = args.task
+checkpoint = args.checkpoint
+
+
+num_mask = int(sequence_length * mask_ratio)
 test_csv = f'../dataset_split/csv/{task}_test_file.csv'
-output_dir = f'../data/{mask_type}/Vit_{task}'
+output_dir = f'/home/uceckz0/Project/imae/data/rec_{mask_type}/{task}'
 
 rollout_rec_save_path = output_dir + f"/{num_mask}"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
 
-checkpoint = args.checkpoint
+
 if checkpoint == "best":
-    checkpoint_path = f'../data/{mask_type}/best_checkpoint.tar'
+    checkpoint_path = f'../data/checkpoint_{mask_type}/{task}_best_checkpoint.tar'
 else: 
-    checkpoint_path = f"../data/{mask_type}/Vit_checkpoint/checkpoint_{checkpoint}.pth"
+    checkpoint_path = f"../data/checkpoint_{mask_type}/checkpoint_{checkpoint}.pth"
 
 ### Initialize model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = VisionTransformer(3, 16, 128, device)
-checkpoint = torch.load(checkpoint_path)
-model.load_state_dict(checkpoint['model'])
-model.to(device)
+print(device)
+if torch.cuda.is_available():
+    model = VisionTransformer(3, 16, 128, device)
+    checkpoint = torch.load(checkpoint_path)
+    model.load_state_dict(checkpoint['model'])
+    model.to(device)
+else:
+    model = VisionTransformer(3, 16, 128, device)
+    checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+    model.load_state_dict(checkpoint['model'])
+    model.to(device)
 ###
 
 ### Load data
@@ -107,10 +115,10 @@ with torch.no_grad():
         for j, chunk in enumerate(target_chunks):
 
             if j == 0: 
-                output = model(origin_copy, num_mask)
+                output = model(origin_copy, num_mask, mask_type)
                 masked_origin = copy.deepcopy(origin_copy)
             else: 
-                output = model(origin_copy, 0)
+                output = model(origin_copy, 0, mask_type)
             
             output_chunks.append(output)
 
@@ -122,7 +130,7 @@ with torch.no_grad():
 
             origin_copy = copy.deepcopy(output)
         
-        if i == 8 or i == 9 or i == 10: 
+        if i == 9 or i == 10: 
 
             _, ax = plt.subplots(rollout_times*2+2, 10, figsize=(20, rollout_times*4+2))
 
@@ -154,7 +162,6 @@ with torch.no_grad():
                     ax[2*k+3][m].set_title("Timestep {timestep} (Target)".format(timestep=int(pos[m])+11+k*10), fontsize=10)
                 
             plt.tight_layout()
-            plt.title(f"R_{R}_Hp_{Hp}")
             plt.savefig(os.path.join(rollout_rec_save_path + f"/{i}.png"))
             plt.close()
 
