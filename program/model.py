@@ -7,7 +7,7 @@ import torch.nn as nn
 
 class VisionTransformer(nn.Module): 
 
-    def __init__(self, channel_num, image_len, patch_len, device_id, nhead=6):
+    def __init__(self, channel_num, image_len, patch_len, nhead=6):
 
         super().__init__()
 
@@ -23,9 +23,9 @@ class VisionTransformer(nn.Module):
         self.end_embedding = nn.Parameter(torch.zeros(1, self.patch_embedding_len)) 
 
         self.pos_embedding = nn.Parameter(torch.randn(self.patch_embedding_num+2, self.patch_embedding_len))*0.02
-        self.pos_embedding = self.pos_embedding.to(device_id)
+        self.pos_embedding = self.pos_embedding#.to(device_id)
 
-        self.random_tensor = torch.randn(self.channel_num,self.image_len,self.image_len).to(device_id) # for random masking
+        self.random_tensor = torch.randn(self.channel_num,self.image_len,self.image_len)#.to(device_id) # for random masking
         
         self.nhead=nhead
         transform_layer = nn.TransformerEncoderLayer(d_model=self.patch_embedding_len + self.nhead, nhead=self.nhead, dropout=0.0, batch_first=True)
@@ -52,7 +52,7 @@ class VisionTransformer(nn.Module):
         if num_mask != 0:
 
             weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
-            idx = torch.multinomial(weights, num_mask, replacement=False).to(x.device)
+            idx = torch.multinomial(weights, num_mask, replacement=False)#.to(x.device)
 
             # encode
             x = self.batch_encoder(x, idx)
@@ -94,12 +94,12 @@ class VisionTransformer(nn.Module):
         x = self.seq_patchify(x)
 
         # add start and end tokens
-        start_embeddings = self.start_embedding.repeat(x.shape[0], 1, 1)
-        end_embeddings = self.end_embedding.repeat(x.shape[0], 1, 1)
+        start_embeddings = self.start_embedding.repeat(x.shape[0], 1, 1)#.to(x.device)
+        end_embeddings = self.end_embedding.repeat(x.shape[0], 1, 1)#.to(x.device)
         x = torch.cat((start_embeddings, x, end_embeddings), 1)
 
         # add positional embeddings
-        pos_embeddings = self.pos_embedding.repeat(x.shape[0], 1, 1)
+        pos_embeddings = self.pos_embedding.repeat(x.shape[0], 1, 1).to(x.device)
         x += pos_embeddings # [10, 66, 768]
 
         # add binary label for masking
@@ -126,6 +126,6 @@ class VisionTransformer(nn.Module):
     
     def mask(self, x, idx): 
         # mask the input tensor
-        self.random_tensor = self.random_tensor.to(x.device)
+        self.random_tensor = self.random_tensor#.to(x.device)
         x[idx] = self.random_tensor
         return x

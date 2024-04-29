@@ -1,4 +1,4 @@
-batch_size: 16
+batch_size: 32
 
 # Sequence
 channels: 3
@@ -15,3 +15,4 @@ save_path:
 dataset: 
   train: '../dataset_split/csv/train_file.csv'
   valid: '../dataset_split/csv/valid_file.csv'
+  # test: '../dataset_split/csv/test_file.csv'
