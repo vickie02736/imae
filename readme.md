@@ -1,13 +1,13 @@
 /data
-- checkpoint_random
+- shallow_water_simulation
+- shallow_water_simulation_inner_rollout
+- shallow_water_simulation_outer_rollout
+- checkpoint
     * losses.json               # include train and valid losses
     * checkpoint_{epoch}.pth
     * checkpoint_{epoch}.tar
     * checkpoint_{epoch}.pth.tar
-- shallow_water_simulation
-- shallow_water_simulation_inner_rollout
-- shallow_water_simulation_outer_rollout
-- rec_random
+- rec
     - valid             # visualisation during training
     - inner
         - {mask_ratio}
@@ -17,5 +17,3 @@
     - outer
     - inner_rollout
     - outer_rollout
-- rec_consecutive
-

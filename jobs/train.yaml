@@ -1,0 +1,17 @@
+batch_size: 16
+
+# Sequence
+channels: 3
+image_size: 128
+patch_size: 16
+seq_length: 10
+
+rollout_times: 2
+
+save_path: 
+  reconstruct: '../data/rec/'
+  checkpoint: '../data/ckpt/'
+
+dataset: 
+  train: '../dataset_split/csv/train_file.csv'
+  valid: '../dataset_split/csv/valid_file.csv'

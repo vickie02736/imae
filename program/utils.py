@@ -1,8 +1,26 @@
 import os
 import json
+import torch
+import torch.nn as nn
 from matplotlib import pyplot as plt
 
-def plot_rollout(origin, output_chunks, target_chunks, epoch, path):
+def int_or_string(value):
+    if value == "best":
+        return value
+    else:
+        return int(value)
+
+class RMSELoss(nn.Module):
+    def __init__(self, eps=1e-8):
+        super().__init__()
+        self.mse = nn.MSELoss()
+        self.eps = eps
+        
+    def forward(self,yhat,y):
+        loss = torch.sqrt(self.mse(yhat,y) + self.eps)
+        return loss
+
+def plot_rollout(origin, output_chunks, target_chunks, idx, path):
 
     rollout_times = len(output_chunks)
     
@@ -30,11 +48,11 @@ def plot_rollout(origin, output_chunks, target_chunks, epoch, path):
             ax[2*k+2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11+k*10), fontsize=10)
     
     plt.tight_layout()
-    plt.savefig(os.path.join(path, f"{epoch}.png"))
+    plt.savefig(os.path.join(path, f"{idx}.png"))
     plt.close()
 
 
-def save_losses(save_path, train_losses, valid_losses):
+def save_losses(save_path, train_losses, train_losses_rollout, valid_losses):
     """
     Saves the training and validation losses to a JSON file.
     
@@ -47,6 +65,7 @@ def save_losses(save_path, train_losses, valid_losses):
     os.makedirs(save_path, exist_ok=True)
     loss_data = {
         'train_losses': train_losses,
+        'train_losses_rollout': train_losses_rollout,
         'valid_losses': valid_losses, 
     }
     with open(os.path.join(save_path, 'losses.json'), 'w') as f: 

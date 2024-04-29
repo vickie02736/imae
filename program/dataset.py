@@ -61,7 +61,7 @@ class DataBuilder(Dataset):
         return len(self.all_clips)
     
     def __getitem__(self, idx):
-
+        
         clip = self.all_clips[idx]
         param_R = torch.tensor(clip["R"].to_numpy(), dtype=torch.float32)
         param_Hp = torch.tensor(clip["Hp"].to_numpy(), dtype=torch.float32)

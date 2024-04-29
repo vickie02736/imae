@@ -21,19 +21,19 @@ conda activate imae
 timestamp=$(date +%d-%m-%Y_%H:%M:%S)
 echo $timestamp
 
-# for i in {1..9}; do
-#     mask_ratio=$(echo "scale=1; $i / 10" | bc)
-#     python ../program/test.py\
-#         --checkpoint 400\
-#         --rollout-times 7\
-#         --mask-ratio $mask_ratio\
-#         --task inner\
-#         --mask-type random
-# done
-python ../program/test.py\
-    --checkpoint 400\
-    --rollout-times 7\
-    --mask-ratio 0.5\
-    --task inner_rollout\
-    --mask-type random
+for i in {7..9}; do
+    mask_ratio=$(echo "scale=1; $i / 10" | bc)
+    python ../program/test.py\
+        --checkpoint 400\
+        --rollout-times 7\
+        --mask-ratio $mask_ratio\
+        --task inner\
+        --mask-type random
+done
+# python ../program/test.py\
+#     --checkpoint 400\
+#     --rollout-times 7\
+#     --mask-ratio 0.5\
+#     --task inner_rollout\
+#     --mask-type random
 echo $timestamps

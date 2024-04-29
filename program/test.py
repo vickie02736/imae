@@ -54,7 +54,7 @@ checkpoint = args.checkpoint
 
 num_mask = int(sequence_length * mask_ratio)
 test_csv = f'../dataset_split/csv/{task}_test_file.csv'
-output_dir = f'/home/uceckz0/Project/imae/data/rec_{mask_type}/{task}'
+output_dir = f'/home/uceckz0/Project/imae/data/rec/{task}'
 
 rollout_rec_save_path = output_dir + f"/{num_mask}"
 os.makedirs(rollout_rec_save_path, exist_ok=True)
@@ -130,7 +130,7 @@ with torch.no_grad():
 
             origin_copy = copy.deepcopy(output)
         
-        if i == 9 or i == 10: 
+        if i == 3: 
 
             _, ax = plt.subplots(rollout_times*2+2, 10, figsize=(20, rollout_times*4+2))
 
