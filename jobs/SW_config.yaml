@@ -1,3 +1,16 @@
+'''
+simulation model configuration
+'''
+
+
+
+
+
+
+'''
+machine learning model configuration
+'''
+
 batch_size: 32
 
 # Sequence
@@ -6,13 +19,20 @@ image_size: 128
 patch_size: 16
 seq_length: 10
 
-rollout_times: 2
+train:
+  loss_fn: "MSE"
+  
+test:
+  rollout_times: 2
+  metric: ["MSE", "RMSE", "MAE" "SSIM", "PSNR"]
 
 save_path: 
   reconstruct: '../data/rec/'
   checkpoint: '../data/ckpt/'
 
+datascale: [inner100, outer100, inner200, outer200]
+
 dataset: 
   train: '../dataset_split/csv/train_file.csv'
   valid: '../dataset_split/csv/valid_file.csv'
-  # test: '../dataset_split/csv/test_file.csv'
+  test: '../dataset_split/csv/test_file.csv'

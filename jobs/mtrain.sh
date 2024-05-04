@@ -29,5 +29,5 @@ conda activate imae
 torchrun --nnodes=1 --nproc_per_node=2 ../program/main.py\
         --train True\
         --epochs 2\
-        --restart-epoch 8
+        --resume-epoch 10
 # echo $timestamp
