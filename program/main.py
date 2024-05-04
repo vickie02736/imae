@@ -8,21 +8,21 @@ import numpy as np
 from tqdm import tqdm
 
 from model import VisionTransformer
-from utils import plot_rollout, save_losses
-from utils import RMSELoss
+# from utils import plot_rollout, save_losses
+# from utils import RMSELoss
 from utils import int_or_string
 from dataset import DataBuilder
 from engine import Trainer, Evaluator
 
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader
+# import torch.nn as nn
+# import torch.optim as optim
+# from torch.utils.data import DataLoader
 
 import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data.distributed import DistributedSampler
+# from torch.nn.parallel import DistributedDataParallel as DDP
+# from torch.utils.data.distributed import DistributedSampler
 
 from utils import int_or_string
 
@@ -75,9 +75,9 @@ if __name__ == "__main__":
 
     model = VisionTransformer(config['channels'], config['image_size'], config['patch_size'])
 
-    train_dataset = DataBuilder(config['dataset']['train'], config['seq_length'], config['rollout_times'])
+    train_dataset = DataBuilder(config['dataset']['train'], config['seq_length'], config['train']['rollout_times'])
     trainer = Trainer(rank, config, train_dataset, model, args.epochs)
-    valid_dataset = DataBuilder(config['dataset']['valid'], config['seq_length'], config['rollout_times'])
+    valid_dataset = DataBuilder(config['dataset']['valid'], config['seq_length'], config['train']['rollout_times'])
     evalutor = Evaluator(rank, config, valid_dataset, model, args.epochs)
 
     if args.resume_epoch != 0: 

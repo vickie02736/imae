@@ -10,16 +10,38 @@ from metrics import RMSELoss
 
 from matplotlib import pyplot as plt
 
+class Engine: 
 
-class Trainer:
-    def __init__(self, rank, config, dataset, model, epochs):
+    def __init__(self, rank, config, dataset, model, epochs, mode='train'):
         self.rank = rank
         self.config = config
         self.dataset = dataset
         self.epochs = epochs
         self.model = model
+        self.mode = mode
         self.setup()
+        
 
+    def setup(self):
+        self.device = torch.device(f"cuda:{self.rank % torch.cuda.device_count()}")
+        self.world_size=torch.cuda.device_count()
+        self.model = self.model.to(self.device)
+        self.init_dataloader()
+        self.init_loss_function()
+
+
+    def init_dataloader(self):
+        # Initialize dataloaders
+        sampler = DistributedSampler(self.dataset, num_replicas=self.world_size, rank=self.rank)
+        self.dataloader = DataLoader(self.dataset, batch_size=self.config['batch_size'], shuffle=False, drop_last=True, sampler=sampler)
+        self.len_dataset = len(self.dataset)
+
+
+class Trainer(Engine):
+
+    def __init__(self, rank, config, dataset, model, epochs):
+        super().__init__(rank, config, dataset, model, epochs)
+        self.init_training_components() 
 
     def train_epoch(self, epoch):
 
@@ -64,22 +86,6 @@ class Trainer:
                 train_losses_rollout.append(train_loss)
                 self.save_checkpoint(epoch)
             return {'train_losses': train_losses, 'train_losses_rollout': train_losses_rollout}
-        
-
-    def setup(self):
-        self.device = torch.device(f"cuda:{self.rank % torch.cuda.device_count()}")
-        self.world_size=torch.cuda.device_count()
-        self.model = self.model.to(self.device)
-        self.init_dataloader()
-        self.init_training_components()
-        self.init_loss_function()
-
-
-    def init_dataloader(self):
-        # Initialize dataloaders
-        sampler = DistributedSampler(self.dataset, num_replicas=self.world_size, rank=self.rank)
-        self.dataloader = DataLoader(self.dataset, batch_size=self.config['batch_size'], shuffle=False, drop_last=True, sampler=sampler)
-        self.len_dataset = len(self.dataset)
 
 
     def init_training_components(self): 
@@ -91,6 +97,7 @@ class Trainer:
         self.scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, T_start, eta_min=1e-6, last_epoch=-1)
         self.scaler = torch.cuda.amp.GradScaler()
 
+
     def init_loss_function(self):
         # Set up loss function
         if self.config['train']['loss_fn'] == 'MSE':
@@ -99,7 +106,7 @@ class Trainer:
             self.loss_fn = nn.L1Loss()
         else:
             raise ValueError('Invalid loss function')
-
+ 
 
     def load_checkpoint(self, resume_epoch):
         checkpoint_path = self.config['save_path']['checkpoint'] + f'checkpoint_{resume_epoch-1}.pth'
@@ -119,12 +126,16 @@ class Trainer:
                      'scheduler': self.scheduler.state_dict(),
                      'scaler': self.scaler.state_dict(),
                      'epoch': epoch}
-        torch.save(save_dict, save_path + '.pth')
+        torch.save(save_dict, save_path + '.pth') 
 
 
 
+class Evaluator(Engine):
 
-class Evaluator(Trainer):
+    def __init__(self, rank, config, dataset, model, epochs, test_flag=False):
+        super(Evaluator, self).__init__(rank, config, dataset, model, epochs)
+        self.test_flag = test_flag
+
 
     def evaluate_epoch(self, epoch):
 
@@ -160,7 +171,7 @@ class Evaluator(Trainer):
                     total_loss = sum(running_loss_list)
                     average_loss = total_loss / len(self.dataloader.dataset)
                     chunk_losses[metric] = average_loss
-                    
+
         return chunk_losses
 
 
