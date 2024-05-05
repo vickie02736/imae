@@ -33,8 +33,10 @@ class Engine:
     def init_dataloader(self):
         # Initialize dataloaders
         sampler = DistributedSampler(self.dataset, num_replicas=self.world_size, rank=self.rank)
-        self.dataloader = DataLoader(self.dataset, batch_size=self.config['batch_size'], shuffle=False, drop_last=True, sampler=sampler)
+        self.dataloader = DataLoader(self.dataset, batch_size=self.config['batch_size'], 
+                                     shuffle=False, drop_last=True, sampler=sampler)
         self.len_dataset = len(self.dataset)
+
 
 
 class Trainer(Engine):
@@ -138,41 +140,40 @@ class Evaluator(Engine):
 
 
     def evaluate_epoch(self, epoch):
-
         self.model.eval()
         with torch.no_grad():
+            loss_functions, running_losses = self.init_loss_function()  # Ensure this is correctly initialized
 
-            loss_functions, running_losses = self.init_loss_function()
             for i, sample in enumerate(self.dataloader):
                 origin = sample["Input"].float().to(self.device)
-                origin_copy = copy.deepcopy(origin)
                 target = sample["Target"].float().to(self.device)
                 target_chunks = torch.chunk(target, self.config['test']['rollout_times'], dim=1)
                 output_chunks = []
 
                 for j, chunk in enumerate(target_chunks):
-                    if j == 0: 
+                    if j == 0:
                         mask_ratio = torch.rand(1).item()
                         num_mask = int(mask_ratio * self.config['seq_length'])
-                        output = self.model(origin_copy, num_mask)
-                    else: 
-                        output = self.model(origin_copy, 0)
+                        output = self.model(origin, num_mask)
+                    else:
+                        output = self.model(origin, 0)
                     output_chunks.append(output)
-                    origin_copy = copy.deepcopy(output)
+                    origin = output  # Make sure to use updated origin
+
                     for metric, loss_fn in loss_functions.items():
                         loss = loss_fn(output, chunk)
                         running_losses[metric][j] += loss.item()
 
-                if i == 1:
+                if i == 1:  # This condition might need adjusting based on when you want to plot
                     self.plot_rollout(origin, output_chunks, target_chunks, epoch, self.config['save_path']['reconstruct'])
 
-                chunk_losses = {}
-                for metric, running_loss_list in running_losses.items():
-                    total_loss = sum(running_loss_list)
-                    average_loss = total_loss / len(self.dataloader.dataset)
-                    chunk_losses[metric] = average_loss
+            chunk_losses = {}
+            for metric, running_loss_list in running_losses.items():
+                total_loss = sum(running_loss_list)
+                average_loss = total_loss / len(self.dataloader.dataset)
+                chunk_losses[metric] = average_loss
 
-        return chunk_losses
+            return chunk_losses
 
 
     def plot_rollout(self, origin, output_chunks, target_chunks, idx, save_path):
@@ -203,29 +204,28 @@ class Evaluator(Engine):
 
     def init_loss_function(self):
         loss_functions = {}
-        running_loss = {}
-        for metric in self.config['test']['metrics']:
+        running_losses = {}
+        for metric in self.config['test']['metric']:
             if metric == 'MSE':
-                self.mse_loss = nn.MSELoss()
-                self.mse_running_loss = [0 for _ in range(self.config['test']['rollout_times'])]
-                loss_functions['MSE'] = self.mse_loss
-                running_loss['MSR'] = self.mse_running_loss
+                mse_loss = nn.MSELoss()
+                loss_functions['MSE'] = mse_loss
+                running_losses['MSE'] = [0 for _ in range(self.config['test']['rollout_times'])]
             elif metric == 'MAE':
-                self.mae_loss = nn.L1Loss()
-                self.mae_running_loss = [0 for _ in range(self.config['test']['rollout_times'])]
-                loss_functions['MAE'] = self.mae_loss
-                running_loss['MAE'] = self.mae_running_loss
+                mae_loss = nn.L1Loss()
+                loss_functions['MAE'] = mae_loss
+                running_losses['MAE'] = [0 for _ in range(self.config['test']['rollout_times'])]
             elif metric == 'RMSE':
-                self.rmse_loss = RMSELoss()
-                self.rmse_running_loss = [0 for _ in range(self.config['test']['rollout_times'])]
-                loss_functions['RMSE'] = self.rmse_loss
-                running_loss['RMSE'] = self.rmse_running_loss
+                rmse_loss = RMSELoss()
+                loss_functions['RMSE'] = rmse_loss
+                running_losses['RMSE'] = [0 for _ in range(self.config['test']['rollout_times'])]
             elif metric == 'SSIM':
+                # Assuming SSIM loss function initialization if you have one
                 pass
             elif metric == 'PSNR':
+                # Assuming PSNR loss function initialization if you have one
                 pass
             else:
                 raise ValueError('Invalid metric')
-            return loss_functions, running_loss
-            
+        return loss_functions, running_losses
+
     
