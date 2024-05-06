@@ -129,3 +129,4 @@ class VisionTransformer(nn.Module):
         self.random_tensor = self.random_tensor#.to(x.device)
         x[idx] = self.random_tensor
         return x
+    

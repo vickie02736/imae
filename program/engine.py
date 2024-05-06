@@ -1,5 +1,6 @@
 import os
 import copy
+import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,13 +11,13 @@ from metrics import RMSELoss
 
 from matplotlib import pyplot as plt
 
+
 class Engine: 
 
-    def __init__(self, rank, config, dataset, model, epochs, mode='train'):
+    def __init__(self, rank, config, dataset, model, mode='train'):
         self.rank = rank
         self.config = config
         self.dataset = dataset
-        self.epochs = epochs
         self.model = model
         self.mode = mode
         self.setup()
@@ -37,13 +38,20 @@ class Engine:
                                      shuffle=False, drop_last=True, sampler=sampler)
         self.len_dataset = len(self.dataset)
 
+    def save_losses(self, loss_dic, save_path, save_name):
+        os.makedirs(save_path, exist_ok=True)
+        with open(os.path.join(save_path, save_name), 'w') as f: 
+            json.dump(loss_dic, f)
+
 
 
 class Trainer(Engine):
 
     def __init__(self, rank, config, dataset, model, epochs):
-        super().__init__(rank, config, dataset, model, epochs)
+        super().__init__(rank, config, dataset, model)
+        self.epochs = epochs
         self.init_training_components() 
+        
 
     def train_epoch(self, epoch):
 
@@ -87,7 +95,11 @@ class Trainer(Engine):
                 rollout_loss = running_loss_rollout / len(self.dataloader.dataset)
                 train_losses_rollout.append(train_loss)
                 self.save_checkpoint(epoch)
-            return {'train_losses': train_losses, 'train_losses_rollout': train_losses_rollout}
+            
+            loss_data = {'train_losses': train_losses, 'train_losses_rollout': train_losses_rollout}
+
+            self.save_losses(loss_data, self.config['train']['save_loss'], 'train_losses.json')
+            # return {'train_losses': train_losses, 'train_losses_rollout': train_losses_rollout}
 
 
     def init_training_components(self): 
@@ -111,7 +123,7 @@ class Trainer(Engine):
  
 
     def load_checkpoint(self, resume_epoch):
-        checkpoint_path = self.config['save_path']['checkpoint'] + f'checkpoint_{resume_epoch-1}.pth'
+        checkpoint_path = self.config['train']['save_checkpoint'] + f'checkpoint_{resume_epoch-1}.pth'
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         self.model = self.model.to(self.device)
         self.model = DDP(self.model, device_ids=[self.rank])
@@ -122,7 +134,7 @@ class Trainer(Engine):
 
 
     def save_checkpoint(self, epoch):
-        save_path = os.path.join(self.config['save_path']['checkpoint'], f'checkpoint_{epoch}')
+        save_path = os.path.join(self.config['train']['save_checkpoint'], f'checkpoint_{epoch}')
         save_dict = {'model': self.model.state_dict(),
                      'optimizer': self.optimizer.state_dict(),
                      'scheduler': self.scheduler.state_dict(),
@@ -134,12 +146,11 @@ class Trainer(Engine):
 
 class Evaluator(Engine):
 
-    def __init__(self, rank, config, dataset, model, epochs, test_flag=False):
-        super(Evaluator, self).__init__(rank, config, dataset, model, epochs)
+    def __init__(self, rank, config, dataset, model, test_flag=False):
+        super(Evaluator, self).__init__(rank, config, dataset, model)
         self.test_flag = test_flag
 
-
-    def evaluate_epoch(self, epoch):
+    def evaluate_epoch(self, epoch, rec_savepath, mask_ratio=None):
         self.model.eval()
         with torch.no_grad():
             loss_functions, running_losses = self.init_loss_function()  # Ensure this is correctly initialized
@@ -147,17 +158,23 @@ class Evaluator(Engine):
             for i, sample in enumerate(self.dataloader):
                 origin = sample["Input"].float().to(self.device)
                 target = sample["Target"].float().to(self.device)
+                origin_copy = copy.deepcopy(origin)
                 target_chunks = torch.chunk(target, self.config['test']['rollout_times'], dim=1)
                 output_chunks = []
 
                 for j, chunk in enumerate(target_chunks):
                     if j == 0:
-                        mask_ratio = torch.rand(1).item()
+                        if self.test_flag == False:
+                            mask_ratio = torch.rand(1).item()
+                        else: 
+                            mask_ratio = mask_ratio
                         num_mask = int(mask_ratio * self.config['seq_length'])
                         output = self.model(origin, num_mask)
+                        output_copy = copy.deepcopy(output)
                     else:
                         output = self.model(origin, 0)
-                    output_chunks.append(output)
+                        output_copy = copy.deepcopy(output)
+                    output_chunks.append(output_copy)
                     origin = output  # Make sure to use updated origin
 
                     for metric, loss_fn in loss_functions.items():
@@ -165,7 +182,7 @@ class Evaluator(Engine):
                         running_losses[metric][j] += loss.item()
 
                 if i == 1:  # This condition might need adjusting based on when you want to plot
-                    self.plot_rollout(origin, output_chunks, target_chunks, epoch, self.config['save_path']['reconstruct'])
+                    self.plot_rollout(origin_copy, output_chunks, target_chunks, epoch, rec_savepath)
 
             chunk_losses = {}
             for metric, running_loss_list in running_losses.items():
@@ -173,7 +190,9 @@ class Evaluator(Engine):
                 average_loss = total_loss / len(self.dataloader.dataset)
                 chunk_losses[metric] = average_loss
 
-            return chunk_losses
+            valid_losses = {f'{epoch}': chunk_losses}
+            # return chunk_losses 
+            self.save_losses(valid_losses, self.config['valid']['save_loss'], 'valid_losses.json')
 
 
     def plot_rollout(self, origin, output_chunks, target_chunks, idx, save_path):
@@ -228,4 +247,3 @@ class Evaluator(Engine):
                 raise ValueError('Invalid metric')
         return loss_functions, running_losses
 
-    

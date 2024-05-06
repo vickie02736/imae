@@ -8,21 +8,14 @@ import numpy as np
 from tqdm import tqdm
 
 from model import VisionTransformer
-# from utils import plot_rollout, save_losses
-# from utils import RMSELoss
 from utils import int_or_string
-from dataset import DataBuilder
+from database.shallow_water.dataset import DataBuilder
 from engine import Trainer, Evaluator
 
 
 import torch
-# import torch.nn as nn
-# import torch.optim as optim
-# from torch.utils.data import DataLoader
 
 import torch.distributed as dist
-# from torch.nn.parallel import DistributedDataParallel as DDP
-# from torch.utils.data.distributed import DistributedSampler
 
 from utils import int_or_string
 
@@ -59,8 +52,7 @@ def get_args_parser():
 
 #-------------------------------------------------------------------------------------------
 
-
-
+ 
 if __name__ == "__main__":
     parser = get_args_parser()
     args = parser.parse_args()
@@ -70,15 +62,15 @@ if __name__ == "__main__":
     rank = dist.get_rank()
 
     config = yaml.load(open("SW_config.yaml", "r"), Loader=yaml.FullLoader)
-    os.makedirs(config['save_path']['checkpoint'], exist_ok=True)
-    os.makedirs(config['save_path']['reconstruct'], exist_ok=True)
+    os.makedirs(config['train']['save_checkpoint'], exist_ok=True)
+    os.makedirs(config['valid']['save_reconstruct'], exist_ok=True)
 
     model = VisionTransformer(config['channels'], config['image_size'], config['patch_size'])
 
-    train_dataset = DataBuilder(config['dataset']['train'], config['seq_length'], config['train']['rollout_times'])
+    train_dataset = DataBuilder(config['train']['dataset'], config['seq_length'], config['train']['rollout_times'])
     trainer = Trainer(rank, config, train_dataset, model, args.epochs)
-    valid_dataset = DataBuilder(config['dataset']['valid'], config['seq_length'], config['train']['rollout_times'])
-    evalutor = Evaluator(rank, config, valid_dataset, model, args.epochs)
+    valid_dataset = DataBuilder(config['valid']['dataset'], config['seq_length'], config['valid']['rollout_times'])
+    evalutor = Evaluator(rank, config, valid_dataset, model, test_flag = False)
 
     if args.resume_epoch != 0: 
         trainer.setup()
@@ -88,4 +80,4 @@ if __name__ == "__main__":
     
     for epoch in tqdm(range(args.resume_epoch, end_epoch), desc="Epoch progress"): 
         train_loss = trainer.train_epoch(epoch)
-        valid_loss = evalutor.evaluate_epoch(epoch) # dictionary
+        valid_loss = evalutor.evaluate_epoch(epoch, config['valid']['save_reconstruct']) # dictionary

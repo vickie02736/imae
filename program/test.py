@@ -7,7 +7,7 @@ import numpy as np
 
 from model import VisionTransformer
 # from utils import plot_rollout
-from dataset import DataBuilder
+from Project.imae.database.shallow_water_simulation.dataset import DataBuilder
 
 import torch
 import torch.nn as nn

@@ -24,10 +24,9 @@ conda activate imae
 
 # wandb login --relogin 8c3ad30d1b4df3c419d42a87c1979b0eb404232e
 
-# timestamp=$(date +%d-%m-%Y_%H:%M:%S)
-# echo $timestamp
+echo $(date +%d-%m-%Y_%H:%M:%S)
 torchrun --nnodes=1 --nproc_per_node=2 ../program/main.py\
         --train True\
-        --epochs 2\
-        --resume-epoch 14
-# echo $timestamp
+        --epochs 10\
+        --resume-epoch 0
+echo $(date +%d-%m-%Y_%H:%M:%S)
