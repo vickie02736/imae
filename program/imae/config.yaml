@@ -1,24 +1,17 @@
 batch_size: 50 #A100 128
 
 # Sequence
-channels: 3
-image_size: 128
 patch_size: 16
 seq_length: 10
 
-simulation: 
-
-
 train:
-  dataset: '../dataset_split/csv/train_file.csv'
   loss_fn: "MSE"
   rollout_times: 2
-  save_checkpoint: '../data/ckpt/'
-  save_loss: '../data/loss/'
+  save_checkpoint: '../data/shallow_water/ckpt/'
+  save_loss: '../data/shallow_water/loss/'
 
 
 valid: 
-  dataset: '../dataset_split/csv/valid_file.csv'
   rollout_times: 2
   metric: 
     - "MSE"
@@ -26,8 +19,8 @@ valid:
     - "MAE" 
     - "SSIM" 
     - "PSNR"
-  save_reconstruct: '../data/rec/'
-  save_loss: '../data/loss/'
+  save_reconstruct: '../data/shallow_water/rec/'
+  save_loss: '../data/shallow_water/loss/'
   
 test:
   dataset: 

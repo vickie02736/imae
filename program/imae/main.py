@@ -2,22 +2,18 @@ import argparse
 import copy
 import json
 import os
+import sys
+sys.path.append('..')
 import yaml
 import random
 import numpy as np
 from tqdm import tqdm
-
-from model import VisionTransformer
-from utils import int_or_string
-from database.shallow_water.dataset import DataBuilder
-from engine import Trainer, Evaluator
-
-
 import torch
-
 import torch.distributed as dist
 
-from utils import int_or_string
+from model import VisionTransformer
+from engine import Trainer, Evaluator
+from program.utils.tool import int_or_string
 
 # import wandb
 # wandb.login()
@@ -31,7 +27,6 @@ torch.backends.cudnn.deterministic = True
 
 
 #-------------------------------------------------------------------------------------------
-
 
 def get_args_parser():
 
@@ -61,15 +56,20 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     rank = dist.get_rank()
 
-    config = yaml.load(open("SW_config.yaml", "r"), Loader=yaml.FullLoader)
+    config = yaml.load(open("../program/imae/config.yaml", "r"), Loader=yaml.FullLoader)
+    data_config = yaml.load(open("../database/shallow_water/config.yaml","r"), Loader=yaml.FullLoader)
+
     os.makedirs(config['train']['save_checkpoint'], exist_ok=True)
     os.makedirs(config['valid']['save_reconstruct'], exist_ok=True)
 
-    model = VisionTransformer(config['channels'], config['image_size'], config['patch_size'])
+    model = VisionTransformer(data_config['channels'], data_config['image_size'], config['patch_size'])
 
-    train_dataset = DataBuilder(config['train']['dataset'], config['seq_length'], config['train']['rollout_times'])
+    from database.shallow_water.dataset import DataBuilder
+    train_dataset = DataBuilder(data_config['train_file'], config['seq_length'], config['train']['rollout_times'], timestep=100)
+    valid_dataset = DataBuilder(data_config['valid_file'], config['seq_length'], config['valid']['rollout_times'], timestep=100)
     trainer = Trainer(rank, config, train_dataset, model, args.epochs)
-    valid_dataset = DataBuilder(config['valid']['dataset'], config['seq_length'], config['valid']['rollout_times'])
+
+
     evalutor = Evaluator(rank, config, valid_dataset, model, test_flag = False)
 
     if args.resume_epoch != 0: 

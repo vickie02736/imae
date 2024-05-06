@@ -12,7 +12,7 @@ SEED = 3409
 random.seed(SEED)
 
 # data_dir = '../data/shallow_water_simulation'
-config = yaml.load(open("config.yaml", "r"), Loader=yaml.FullLoader)
+config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
 
 R_list = config['R']
 Hp_list = config['Hp']
@@ -37,19 +37,21 @@ inner_test_keys = {f"R_{R}_Hp_{Hp}" for R, Hp in inner_test_pair_set}
 
 # train and valid
 remaining_keys = all_keys - inner_test_keys - outer_test_keys
+outer_test_list = list(outer_test_keys)
+inner_test_list = list(inner_test_keys)
 remaining_list = list(remaining_keys)
 random.shuffle(remaining_list)
 split_point = int(len(remaining_list) * 0.80)
 
-train_keys = set(remaining_list[:split_point])
-valid_keys = set(remaining_list[split_point:])
+train_list = remaining_list[:split_point]
+valid_list = remaining_list[split_point:]
 
 
 file_data_pairs = {
-    'inner_test_file': inner_test_keys,
-    'outer_test_file': outer_test_keys,
-    'valid_file': valid_keys,
-    'train_file': train_keys, 
+    'inner_test_file': inner_test_list,
+    'outer_test_file': outer_test_list,
+    'valid_file': valid_list,
+    'train_file': train_list, 
 }
 
 
@@ -77,11 +79,13 @@ file_data_pairs = {
 #     data.to_csv(f"./csv/{filename}.csv", index=False)
     
 
-df = pd.read_csv("./dataset_split/100timestep.csv")
-train_df = df[df["Key"].isin(train_keys)]
+
+df = pd.read_csv("../database/shallow_water/dataset_split/100timestep.csv")
+train_df = df[df["Key"].isin(train_list)]
 
 # calculate the min and max of the training dataset, for nomalization
 def calculate_min_max(df):
+    mins, maxs = [], []
     arr = []
     for i in range(len(df)):
         full_sequence = np.load(df["Address"].iloc[i], allow_pickle=True, mmap_mode='r')
@@ -90,24 +94,21 @@ def calculate_min_max(df):
     arr = np.stack(arr)
 
     # normalized_arr = np.empty_like(arr)
-    mins = []
-    maxs = []
     for c in range(arr.shape[1]):
         min_val = arr[:, c, :, :].min()
         max_val = arr[:, c, :, :].max()
         # normalized_arr = 2 * ((arr[:, c, :, :] - min_val) / (max_val - min_val)) - 1
         mins.append(min_val)
         maxs.append(max_val)
-    return {"min":mins, "max":maxs}
+    return mins, maxs
 
-min_max = calculate_min_max(train_df)
+mins, maxs = calculate_min_max(train_df)
+min_max = {'min': [float(x) for x in mins], 'max': [float(x) for x in maxs]}
 
 
-with open('config.yaml', 'r') as yaml_file:
+with open('../database/shallow_water/config.yaml', 'r') as yaml_file:
     config_data = yaml.safe_load(yaml_file) or {}
-
 config_data.update(file_data_pairs)
 config_data.update(min_max)
-
-with open('config.yaml', 'w') as yaml_file:
+with open('../database/shallow_water/config.yaml', 'w') as yaml_file:
     yaml.dump(config_data, yaml_file, default_flow_style=False)

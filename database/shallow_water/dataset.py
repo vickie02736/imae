@@ -11,23 +11,26 @@ import yaml
 
 
 
-# the result of the function above
-# mins = [-0.1717242785274844, -0.1717242785274844, 0.6580036253263515]
-# maxs = [0.1717242785274844, 0.1717242785274844, 1.2]
+config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
 
 
 # the dataset for prediction
 class DataBuilder(Dataset): 
-    def __init__(self, dataset_path, clip_length, rollout_times, transform=None):
-        # dataset_path: csv file
-        # clip_length: the length of input
-        # rollout_times * clip_length = the length of target
 
+    def __init__(self, dataset, clip_length, rollout_times, timestep, transform=None):
+
+        '''
+        dataset_path: config['train_file'], config['valid_file'], config['inner_test_file'], config['outer_test_file']
+        clip_length: the length of input
+        rollout_times * clip_length = the length of target
+        '''
+        
         self.clip_length = clip_length
         self.rollout_times = rollout_times
         self.total_length = clip_length * (rollout_times+1)
 
-        df = pd.read_csv(dataset_path)
+        df = pd.read_csv(f"../database/shallow_water/dataset_split/{timestep}timestep.csv")
+        df = df[df["Key"].isin(dataset)]
         unique_keys = df["Key"].unique()
 
         all_clips = []
@@ -38,9 +41,11 @@ class DataBuilder(Dataset):
             clips = self.cut_clips(sorted_df)
             all_clips.extend(clips)
         self.all_clips = all_clips
+
             
     def __len__(self):
         return len(self.all_clips)
+    
     
     def __getitem__(self, idx):
         
@@ -51,12 +56,12 @@ class DataBuilder(Dataset):
         param_Label = clip["Label"].values
         param_Label = [ast.literal_eval(param_Label[i]) for i in range(len(param_Label))]
         param_Label = torch.tensor(param_Label)
-
-        mins = [-0.1717242785274844, -0.1717242785274844, 0.6580036253263515]
-        maxs = [0.1717242785274844, 0.1717242785274844, 1.2]
     
         image_address = clip["Address"].iloc[0] # the images in the same clip should have the same address
         full_sequence = np.load(image_address, allow_pickle=True, mmap_mode='r')
+        
+        mins = config['min']
+        maxs = config['max']
 
         sub_sequance = full_sequence[clip["Pos"]]
         sub_sequance = self.normalize(sub_sequance, mins, maxs)
@@ -76,6 +81,7 @@ class DataBuilder(Dataset):
         return {"R": param_R, "Hp": param_Hp, "Pos": param_Pos, "Label": param_Label, 
                 "Input": input_sequence, "Target": target_sequence, "Sub_S": sub_sequance}
     
+    
     def cut_clips(self, sorted_df):
         clips = []
         for start in range(len(sorted_df)- self.total_length + 1): 
@@ -84,9 +90,9 @@ class DataBuilder(Dataset):
             clips.append(clip)
         return clips # all clips from the same sequence
     
+    
     def normalize(self, arr, mins, maxs): 
         normalized_arr = np.empty_like(arr, dtype=np.float32)
         for c in range(arr.shape[1]):
             normalized_arr[:, c, :, :] = 2 * ((arr[:, c, :, :] - mins[c]) / (maxs[c] - mins[c])) - 1
         return normalized_arr
-

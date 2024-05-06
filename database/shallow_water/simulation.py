@@ -11,20 +11,21 @@ CNRS/LMD/IPSL, dmitry.khvorostyanov @ lmd.polytechnique.fr
 import multiprocessing
 from multiprocessing import Pool
 import os
-import argparse
+# import argparse
 import yaml
 import numpy as np
 from matplotlib import pyplot as plt
 import json
+import numpy as np
 import pandas as pd
 
 
 
 
-def get_args_parser(): 
-    parser = argparse.ArgumentParser(description='Shallow Water Simulation')
-    parser.add_argument('--iteration-times', type=int, default=10000, help='iteration times')
-    return parser
+# def get_args_parser(): 
+#     parser = argparse.ArgumentParser(description='Shallow Water Simulation')
+#     parser.add_argument('--iteration-times', type=int, default=10000, help='iteration times')
+#     return parser
 
 
 
@@ -95,14 +96,14 @@ class shallow(object):
         self.dx=dx
         self.dt=dt
         
-        self.x,self.y = mgrid[:self.N,:self.N]
+        self.x,self.y = np.mgrid[:self.N,:self.N]
         
-        self.u=zeros((self.N,self.N))
-        self.v=zeros((self.N,self.N))
+        self.u=np.zeros((self.N,self.N))
+        self.v=np.zeros((self.N,self.N))
         
         self.h_ini=h_ini
         
-        self.h=self.h_ini * ones((self.N,self.N))
+        self.h=self.h_ini * np.ones((self.N,self.N))
         
         rr = (self.x-px)**2 + (self.y-py)**2
         self.h[rr<R] = self.h_ini + Hp #set initial conditions
@@ -117,7 +118,7 @@ class shallow(object):
         Axis specifies direction of spatial derivative (d/dx or d/dy)
         dA[i]/dx =  (A[i+1] - A[i-1] )  / 2dx
         """
-        return (roll(A, -1, axis) - roll(A, 1, axis)) / (self.dx*2.) # roll: shift the array axis=0 shift the horizontal axis
+        return (np.roll(A, -1, axis) - np.roll(A, 1, axis)) / (self.dx*2.) # roll: shift the array axis=0 shift the horizontal axis
 
     def d_dx(self, A):
         return self.dxy(A,1)
@@ -131,7 +132,7 @@ class shallow(object):
         http://en.wikipedia.org/wiki/Shallow_water_equations#Non-conservative_form
         """
         for x in [h, u, v]: # type check
-           assert isinstance(x, ndarray) and not isinstance(x, matrix)
+            assert isinstance(x, np.ndarray) and not isinstance(x, np.matrix)
 
         g,b,dx = self.g, self.b, self.dx
 
@@ -162,11 +163,9 @@ class shallow(object):
     
 
 
-pairs = {}
-
-def simulation(R, Hp_hat, iteration_times):
+def simulation(fig_size, R, Hp_hat,iteration_times):
     
-    SW = shallow(N=128,px=72,py=80,R=R*R,Hp=Hp_hat/100,b=0.2)
+    SW = shallow(N=fig_size,px=72,py=80,R=R*R,Hp=Hp_hat/100,b=0.2)
 
     # chose a point (x,y) to check the evolution
     x, y = 10,10
@@ -204,6 +203,10 @@ def simulation(R, Hp_hat, iteration_times):
     
     timestep = int(iteration_times/100)
     file_name = f'R_{R}_Hp_{Hp_hat}'
+    save_dir = f'../database/shallow_water/data/{timestep}timestep'
+    os.makedirs(save_dir, exist_ok=True)
+    np.save(os.path.join(save_dir, file_name), final_npy)
+
 
     # Create a figure with 20 rows and 10 columns of subplots
     _, ax = plt.subplots(nrows=int(timestep/10), ncols=10, figsize=(20, 2*int(timestep/10)))
@@ -214,53 +217,47 @@ def simulation(R, Hp_hat, iteration_times):
             ax[k][j].set_xticks([])
             ax[k][j].set_yticks([])
     plt.tight_layout()
-    save_path = f'./{timestep}timestep_vis'
+    save_path = f'../database/shallow_water/data/{timestep}timestep_vis'
     os.makedirs(save_path, exist_ok=True)
     plt.savefig(os.path.join(save_path, f"{file_name}.png"))
     plt.close()
 
-    
-    save_dir = f'./{timestep}timestep'
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, file_name)
-    np.save(save_path, final_npy)
-
-    pairs[file_name] = f"{save_path}.npy"
-
-
+    return {'file_name': file_name, 'save_path': os.path.join(save_dir, f"{file_name}.npy")}
 
 
 
 def worker_simulation(params):
-    R, Hp, iteration_times = params
-    return simulation(R, Hp, iteration_times)
+    fig_size, R, Hp, iteration_times = params
+    return simulation(fig_size, R, Hp, iteration_times)
 
 
 if __name__ == "__main__":
-    parser = get_args_parser()
-    args = parser.parse_args()
+    # parser = get_args_parser()
+    # args = parser.parse_args()
     
-    config = yaml.load(open("config.yaml", "r"), Loader=yaml.FullLoader)
+    config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
     
+    for timestep in config['timestep']:
     # Prepare parameters for all simulations
-    tasks = [(R, Hp, args.iteration_times) for R in config['R'] for Hp in config['Hp']]
-    
-    # Using multiprocessing Pool to parallelize the simulations
-    with Pool(processes=multiprocessing.cpu_count()) as pool:
-        results = pool.map(worker_simulation, tasks)
+        timestep = int(timestep)
+        fig_size = config['image_size']
+        tasks = [(fig_size, R, Hp, timestep*100) for R in config['R'] for Hp in config['Hp']]
+        
+        # Using multiprocessing Pool to parallelize the simulations
+        with Pool(processes=multiprocessing.cpu_count()) as pool:
+            results = pool.map(worker_simulation, tasks)
 
-    pairs = {result['file_name']: result['save_path'] for result in results}
+        pairs = {result['file_name']: result['save_path'] for result in results}
     
-    timestep = int(args.iteration_times/100)
-    os.makedirs("./dataset_split/", exist_ok=True)
-    with open(f"./dataset_split/{timestep}timestep.json", 'w') as file:
-        json.dump(pairs, file)
+        os.makedirs("../database/shallow_water/dataset_split/", exist_ok=True)
+        with open(f"../database/shallow_water/dataset_split/{timestep}timestep.json", 'w') as file:
+            json.dump(pairs, file)
 
-    data = pd.DataFrame(list(pairs.items()), columns=['Key', 'Address'])
-    data[['R', 'Hp']] = data['Key'].str.extract(r'R_(\d+)_Hp_(\d+)')
-    data['R'] = pd.to_numeric(data['R'])
-    data['Hp'] = pd.to_numeric(data['Hp'])
-    new_rows = [row.tolist() + [i] for _, row in data.iterrows() for i in range(0, timestep)] 
-    data = pd.DataFrame(new_rows, columns=['Key', 'Address', 'R', 'Hp', 'Pos'])
-    data['Label'] = [[a, b, c] for a, b, c in zip(data['R'], data['Hp'], data['Pos'])]
-    data.to_csv(f"./dataset_split/{timestep}timestep.csv", index=False)
+        data = pd.DataFrame(list(pairs.items()), columns=['Key', 'Address'])
+        data[['R', 'Hp']] = data['Key'].str.extract(r'R_(\d+)_Hp_(\d+)')
+        data['R'] = pd.to_numeric(data['R'])
+        data['Hp'] = pd.to_numeric(data['Hp'])
+        new_rows = [row.tolist() + [i] for _, row in data.iterrows() for i in range(0, timestep)] 
+        data = pd.DataFrame(new_rows, columns=['Key', 'Address', 'R', 'Hp', 'Pos'])
+        data['Label'] = [[a, b, c] for a, b, c in zip(data['R'], data['Hp'], data['Pos'])]
+        data.to_csv(f"../database/shallow_water/dataset_split/{timestep}timestep.csv", index=False)

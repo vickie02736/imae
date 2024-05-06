@@ -7,7 +7,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from metrics import RMSELoss
+from program.utils.metrics import RMSELoss
 
 from matplotlib import pyplot as plt
 
@@ -149,6 +149,7 @@ class Evaluator(Engine):
     def __init__(self, rank, config, dataset, model, test_flag=False):
         super(Evaluator, self).__init__(rank, config, dataset, model)
         self.test_flag = test_flag
+        self.valid_losses = {}
 
     def evaluate_epoch(self, epoch, rec_savepath, mask_ratio=None):
         self.model.eval()
@@ -190,9 +191,9 @@ class Evaluator(Engine):
                 average_loss = total_loss / len(self.dataloader.dataset)
                 chunk_losses[metric] = average_loss
 
-            valid_losses = {f'{epoch}': chunk_losses}
+            self.valid_losses[epoch] = chunk_losses
             # return chunk_losses 
-            self.save_losses(valid_losses, self.config['valid']['save_loss'], 'valid_losses.json')
+            self.save_losses(self.valid_losses, self.config['valid']['save_loss'], 'valid_losses.json')
 
 
     def plot_rollout(self, origin, output_chunks, target_chunks, idx, save_path):
