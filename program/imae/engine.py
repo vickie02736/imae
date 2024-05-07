@@ -198,15 +198,15 @@ class Evaluator(Engine):
 
     def plot_rollout(self, origin, output_chunks, target_chunks, idx, save_path):
         rollout_times = len(output_chunks)
-        _, ax = plt.subplots(rollout_times*2+1, 10, figsize=(20, rollout_times*4+2))
-        for j in range(10): 
+        _, ax = plt.subplots(rollout_times*2+1, self.config['seq_length'], figsize=(self.config['seq_length']*2, rollout_times*4+2))
+        for j in range(self.config['seq_length']): 
             # visualise input
             ax[0][j].imshow(origin[0][j][0].cpu().detach().numpy())
             ax[0][j].set_xticks([])
             ax[0][j].set_yticks([])
             ax[0][j].set_title("Timestep {timestep} (Input)".format(timestep=j+1), fontsize=10)
         for k in range(rollout_times): 
-            for j in range(10):
+            for j in range(self.config['seq_length']):
                 # visualise output
                 ax[2*k+1][j].imshow(output_chunks[k][0][j][0].cpu().detach().numpy())
                 ax[2*k+1][j].set_xticks([])

@@ -1,6 +1,5 @@
 batch_size: 50 #A100 128
 
-# Sequence
 patch_size: 16
 seq_length: 10
 

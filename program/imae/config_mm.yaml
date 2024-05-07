@@ -1,0 +1,40 @@
+batch_size: 200
+
+# Sequence
+patch_size: 8
+seq_length: 5
+
+train:
+  loss_fn: "MSE"
+  rollout_times: 2
+  save_checkpoint: '../data/moving_mnist/ckpt/'
+  save_loss: '../data/moving_mnist/loss/'
+
+
+valid: 
+  rollout_times: 2
+  metric: 
+    - "MSE"
+    - "RMSE"
+    - "MAE" 
+    - "SSIM" 
+    - "PSNR"
+  save_reconstruct: '../data/moving_mnist/rec/'
+  save_loss: '../data/moving_mnist/loss/'
+  
+test:
+  dataset: 
+    - inner100
+    - outer100
+    - inner200
+    - outer200
+  rollout_times: 2
+  metric: 
+    - "MSE"
+    - "RMSE"
+    - "MAE" 
+    - "SSIM" 
+    - "PSNR"
+  
+  
+

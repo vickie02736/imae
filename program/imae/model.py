@@ -7,7 +7,7 @@ import torch.nn as nn
 
 class VisionTransformer(nn.Module): 
 
-    def __init__(self, channel_num, image_len, patch_len, nhead=6):
+    def __init__(self, channel_num, image_len, patch_len, nhead=8):
 
         super().__init__()
 
@@ -42,7 +42,7 @@ class VisionTransformer(nn.Module):
         self.batch_encoder = torch.vmap(self.encoder, in_dims=(0, None))
         self.batch_decoder = torch.vmap(self.decoder)
 
-        self.conv = nn.Conv2d(3, 3, kernel_size = 3, padding =1)
+        self.conv = nn.Conv2d(channel_num, channel_num, kernel_size = 3, padding =1)
         self.seq_conv = torch.vmap(self.conv)
 
 

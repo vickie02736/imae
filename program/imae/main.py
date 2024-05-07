@@ -1,6 +1,4 @@
 import argparse
-import copy
-import json
 import os
 import sys
 sys.path.append('..')
@@ -34,6 +32,7 @@ def get_args_parser():
 
     parser.add_argument('--train', type=bool, default=False, help='Train the model')
     parser.add_argument('--resume-epoch', type=int_or_string, default=0, help='start epoch after last training')
+    parser.add_argument('--database', type=str, default='shallow_water', help='Database name')
 
     train_group = parser.add_argument_group()
     train_group.add_argument('--epochs', type=int, default=200, help='Number of epochs')
@@ -56,20 +55,32 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     rank = dist.get_rank()
 
-    config = yaml.load(open("../program/imae/config.yaml", "r"), Loader=yaml.FullLoader)
-    data_config = yaml.load(open("../database/shallow_water/config.yaml","r"), Loader=yaml.FullLoader)
+    if args.database == 'shallow_water':
+        # shallow water
+        config = yaml.load(open("../program/imae/config_sw.yaml", "r"), Loader=yaml.FullLoader)
+        data_config = yaml.load(open("../database/shallow_water/config.yaml","r"), Loader=yaml.FullLoader)
+        from database.shallow_water.dataset import DataBuilder
+        train_dataset = DataBuilder(data_config['train_file'], config['seq_length'], config['train']['rollout_times'], timestep=100)
+        valid_dataset = DataBuilder(data_config['valid_file'], config['seq_length'], config['valid']['rollout_times'], timestep=100)
+
+    elif args.database == 'moving_mnist':
+        # moving mnist
+        config = yaml.load(open("../program/imae/config_mm.yaml", "r"), Loader=yaml.FullLoader)
+        data_config = yaml.load(open("../database/moving_mnist/config.yaml","r"), Loader=yaml.FullLoader)
+        from database.moving_mnist.dataset import DataBuilder
+        train_dataset = DataBuilder(config['seq_length'], config['train']['rollout_times'], 'train')
+        valid_dataset = DataBuilder(config['seq_length'], config['valid']['rollout_times'], 'valid')
+
+    else:
+        pass
 
     os.makedirs(config['train']['save_checkpoint'], exist_ok=True)
     os.makedirs(config['valid']['save_reconstruct'], exist_ok=True)
 
     model = VisionTransformer(data_config['channels'], data_config['image_size'], config['patch_size'])
 
-    from database.shallow_water.dataset import DataBuilder
-    train_dataset = DataBuilder(data_config['train_file'], config['seq_length'], config['train']['rollout_times'], timestep=100)
-    valid_dataset = DataBuilder(data_config['valid_file'], config['seq_length'], config['valid']['rollout_times'], timestep=100)
+
     trainer = Trainer(rank, config, train_dataset, model, args.epochs)
-
-
     evalutor = Evaluator(rank, config, valid_dataset, model, test_flag = False)
 
     if args.resume_epoch != 0: 
