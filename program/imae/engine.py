@@ -6,8 +6,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
+from piqa import SSIM
 
-from program.utils.metrics import RMSELoss
+from program.utils.metrics import RMSELoss, PSNRLoss
 
 from matplotlib import pyplot as plt
 
@@ -55,14 +56,11 @@ class Trainer(Engine):
         
 
     def train_epoch(self, epoch):
-
         torch.manual_seed(epoch)
         self.model.train()
 
-        running_loss = 0.0
-        running_loss_rollout = 0.0
-        train_losses = []
-        train_losses_rollout = []
+        total_predict_loss = 0.0
+        total_rollout_loss = 0.0
 
         for _, sample in enumerate(self.dataloader):
             origin = sample["Input"].float().to(self.device)
@@ -85,22 +83,20 @@ class Trainer(Engine):
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.1)
             self.scaler.step(self.optimizer)
             self.scaler.update()
-            self.scheduler.step()
 
-            running_loss += predict_loss.item()
-            running_loss_rollout += rollout_loss.item()
+            total_predict_loss += predict_loss.item()
+            total_rollout_loss += rollout_loss.item()
 
-            if self.rank == 0:
-                train_loss = running_loss / len(self.dataloader.dataset)
-                train_losses.append(train_loss)
-                rollout_loss = running_loss_rollout / len(self.dataloader.dataset)
-                train_losses_rollout.append(train_loss)
-                self.save_checkpoint(epoch)
-            
-            loss_data = {'train_losses': train_losses, 'train_losses_rollout': train_losses_rollout}
+        if self.rank == 0:
+            average_predict_loss = total_predict_loss / len(self.dataloader.dataset)
+            average_rollout_loss = total_rollout_loss / len(self.dataloader.dataset)
+
+            loss_data = {'predict_loss': average_predict_loss, 'rollout_loss': average_rollout_loss}
             self.train_losses[epoch] = loss_data
-
             self.save_losses(self.train_losses, self.config['train']['save_loss'], 'train_losses.json')
+            self.save_checkpoint(epoch)
+            self.scheduler.step()  # Adjust this call based on the scheduler type
+
 
 
     def init_training_components(self): 
@@ -152,13 +148,14 @@ class Evaluator(Engine):
         self.test_flag = test_flag
         self.valid_losses = {}
 
-    def evaluate_epoch(self, epoch, rec_savepath, mask_ratio=None):
+    def evaluate_epoch(self, epoch, mask_ratio=None):
 
         torch.manual_seed(epoch)
         self.model.eval()
 
         with torch.no_grad():
-            loss_functions, running_losses = self.init_loss_function()  # Ensure this is correctly initialized
+
+            loss_functions, running_losses = self.init_loss_function() 
 
             for i, sample in enumerate(self.dataloader):
                 origin = sample["Input"].float().to(self.device)
@@ -173,27 +170,39 @@ class Evaluator(Engine):
                             mask_ratio = torch.rand(1).item()
                         else: 
                             mask_ratio = mask_ratio
-                        num_mask = int(mask_ratio * self.config['seq_length'])
-                        output = self.model(origin, num_mask)
+                        num_mask = int(1 + mask_ratio * (self.config['seq_length'] - 2))
+                        output = self.model(origin_copy, num_mask)
                         output_copy = copy.deepcopy(output)
                     else:
-                        output = self.model(origin, 0)
+                        output = self.model(origin_copy, 0)
                         output_copy = copy.deepcopy(output)
                     output_chunks.append(output_copy)
-                    origin = output  # Make sure to use updated origin
+                    origin_copy = output  # Make sure to use updated origin
 
                     for metric, loss_fn in loss_functions.items():
-                        loss = loss_fn(output, chunk)
-                        running_losses[metric][j] += loss.item()
+                        if metric == 'SSIM':
+                            output = (output - output.min()) / (output.max() - output.min())
+                            chunk = (chunk - chunk.min()) / (chunk.max() - chunk.min())
+                            if output.shape[2] == 1:
+                                output = output.repeat(1, 1, 3, 1, 1)
+                                chunk = chunk.repeat(1, 1, 3, 1, 1)
+                            ssim_values = torch.zeros(len(output), self.config['seq_length'], device=self.device)
+                            for i in range(self.config['seq_length']):
+                                ssim_values[:, i] = loss_fn(output[:, i], chunk[:, i])
+                            loss = ssim_values.mean(dim=1)
+                            running_losses[metric][j] += loss.sum().item()
+                        else:
+                            loss = loss_fn(output, chunk)
+                            running_losses[metric][j] += loss.item()
 
                 if i == 10:  # This condition might need adjusting based on when you want to plot
-                    self.plot_rollout(origin_copy, origin, output_chunks, target_chunks, epoch, rec_savepath)
+                    self.plot_rollout(origin_copy, origin, output_chunks, target_chunks, epoch, self.config['valid']['save_reconstruct'])
 
             chunk_losses = {}
             for metric, running_loss_list in running_losses.items():
-                total_loss = sum(running_loss_list)
-                average_loss = total_loss / len(self.dataloader.dataset)
-                chunk_losses[metric] = average_loss
+                    total_loss = sum(running_loss_list)
+                    average_loss = total_loss / len(self.dataloader.dataset)
+                    chunk_losses[metric] = average_loss
 
             self.valid_losses[epoch] = chunk_losses
             # return chunk_losses 
@@ -202,7 +211,7 @@ class Evaluator(Engine):
 
     def plot_rollout(self, origin, masked_origin, output_chunks, target_chunks, idx, save_path):
         rollout_times = len(output_chunks)
-        _, ax = plt.subplots(rollout_times*2+1, self.config['seq_length'], figsize=(self.config['seq_length']*2, rollout_times*4+2))
+        _, ax = plt.subplots(rollout_times*2+2, self.config['seq_length'], figsize=(self.config['seq_length']*2, rollout_times*4+2))
         for j in range(self.config['seq_length']): 
             # visualise input
             ax[0][j].imshow(origin[0][j][0].cpu().detach().numpy())
@@ -220,12 +229,12 @@ class Evaluator(Engine):
                 ax[2*k+2][j].imshow(output_chunks[k][0][j][0].cpu().detach().numpy())
                 ax[2*k+2][j].set_xticks([])
                 ax[2*k+2][j].set_yticks([])
-                ax[2*k+2][j].set_title("Timestep {timestep} (Prediction)".format(timestep=j+11+k*10), fontsize=10)
+                ax[2*k+2][j].set_title("Timestep {timestep} (Prediction)".format(timestep=j+(k+1)*self.config['seq_length']), fontsize=10)
                 # visualise target
                 ax[2*k+3][j].imshow(target_chunks[k][0][j][0].cpu().detach().numpy())
                 ax[2*k+3][j].set_xticks([])
                 ax[2*k+3][j].set_yticks([])
-                ax[2*k+3][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11+k*10), fontsize=10)
+                ax[2*k+3][j].set_title("Timestep {timestep} (Target)".format(timestep=j+(k+1)*self.config['seq_length']), fontsize=10)
         plt.tight_layout()
         plt.savefig(os.path.join(save_path, f"{idx}.png"))
         plt.close()
@@ -248,11 +257,13 @@ class Evaluator(Engine):
                 loss_functions['RMSE'] = rmse_loss
                 running_losses['RMSE'] = [0 for _ in range(self.config['test']['rollout_times'])]
             elif metric == 'SSIM':
-                # Assuming SSIM loss function initialization if you have one
-                pass
+                ssim_loss = SSIM().to(self.device)
+                loss_functions['SSIM'] = ssim_loss
+                running_losses['SSIM'] = [0 for _ in range(self.config['test']['rollout_times'])]
             elif metric == 'PSNR':
-                # Assuming PSNR loss function initialization if you have one
-                pass
+                psnr_loss = PSNRLoss()
+                loss_functions['PSNR'] = psnr_loss
+                running_losses['PSNR'] = [0 for _ in range(self.config['test']['rollout_times'])]
             else:
                 raise ValueError('Invalid metric')
         return loss_functions, running_losses

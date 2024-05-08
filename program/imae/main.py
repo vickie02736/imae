@@ -90,5 +90,5 @@ if __name__ == "__main__":
     end_epoch = args.resume_epoch + args.epochs
     
     for epoch in tqdm(range(args.resume_epoch, end_epoch), desc="Epoch progress"): 
-        train_loss = trainer.train_epoch(epoch)
-        valid_loss = evalutor.evaluate_epoch(epoch, config['valid']['save_reconstruct']) # dictionary
+        # trainer.train_epoch(epoch)
+        evalutor.evaluate_epoch(epoch)

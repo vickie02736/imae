@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N imae_mm
+#$ -N imae_swß
 #$ -l h_rt=24:00:0
 #$ -l mem=80G
 #$ -pe mpi 2
@@ -31,5 +31,5 @@ torchrun --nnodes=1 --nproc_per_node=2 ../program/imae/main.py\
         --train True\
         --epochs 600\
         --resume-epoch 0\
-        --database moving_mnist
+        --database shallow_water
 echo $(date +%d-%m-%Y_%H:%M:%S)
