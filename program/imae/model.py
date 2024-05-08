@@ -23,9 +23,9 @@ class VisionTransformer(nn.Module):
         self.end_embedding = nn.Parameter(torch.zeros(1, self.patch_embedding_len)) 
 
         self.pos_embedding = nn.Parameter(torch.randn(self.patch_embedding_num+2, self.patch_embedding_len))*0.02
-        self.pos_embedding = self.pos_embedding#.to(device_id)
+        self.pos_embedding = self.pos_embedding
 
-        self.random_tensor = torch.randn(self.channel_num,self.image_len,self.image_len)#.to(device_id) # for random masking
+        self.random_tensor = torch.randn(self.channel_num,self.image_len,self.image_len) # for random masking
         
         self.nhead=nhead
         transform_layer = nn.TransformerEncoderLayer(d_model=self.patch_embedding_len + self.nhead, nhead=self.nhead, dropout=0.0, batch_first=True)
@@ -47,18 +47,12 @@ class VisionTransformer(nn.Module):
 
 
     def forward(self, x, num_mask): 
-        num_mask = 5
-
         if num_mask != 0:
-
             weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
-            idx = torch.multinomial(weights, num_mask, replacement=False)#.to(x.device)
-
-            # encode
-            x = self.batch_encoder(x, idx)
+            idx = torch.multinomial(weights, num_mask, replacement=False)
+            x = self.batch_encoder(x, True, idx)
         else: 
-            # encode
-            x = self.batch_encoder(x, idx=None)
+            x = self.batch_encoder(x, False)
 
         # # transformer
         x = self.transformer(x)
@@ -74,6 +68,7 @@ class VisionTransformer(nn.Module):
 
         return x
  
+ 
     def patchify(self, x): 
         # Unfold the height and width dimensions
         x = x.unfold(1, self.patch_len, self.patch_len).unfold(2, self.patch_len, self.patch_len)
@@ -84,18 +79,20 @@ class VisionTransformer(nn.Module):
         x = x.reshape(self.patch_embedding_num, -1)
         return x
     
+
     def unpatchify(self, x): 
         x = x.view(self.side_patch_num, self.side_patch_num, self.channel_num, self.patch_len, self.patch_len)
         x = x.permute(2, 0, 3, 1, 4).reshape(self.channel_num, self.image_len, self.image_len)
         return x
     
-    def encoder(self, x, idx=None): 
+
+    def encoder(self, x, mask_flag=False, mask_idx=None): 
         # apply patchify to the sequence
         x = self.seq_patchify(x)
 
         # add start and end tokens
-        start_embeddings = self.start_embedding.repeat(x.shape[0], 1, 1)#.to(x.device)
-        end_embeddings = self.end_embedding.repeat(x.shape[0], 1, 1)#.to(x.device)
+        start_embeddings = self.start_embedding.repeat(x.shape[0], 1, 1)
+        end_embeddings = self.end_embedding.repeat(x.shape[0], 1, 1)
         x = torch.cat((start_embeddings, x, end_embeddings), 1)
 
         # add positional embeddings
@@ -103,14 +100,16 @@ class VisionTransformer(nn.Module):
         x += pos_embeddings # [10, 66, 768]
 
         # add binary label for masking
-        label = torch.ones(x.shape[0], x.shape[1], self.nhead).to(x.device)
-        if idx is not None:
-            label[idx] = 0
+        # 1 for unmasked, 0 for masked
+        label = torch.ones(x.shape[0], x.shape[1], self.nhead).to(x.device) 
+        if mask_flag: 
+            label[mask_idx] = 0
         x = torch.cat((x, label), dim=2) # [10, 66, 769]
 
         # pass through the transformer
         x = x.view(-1, self.patch_embedding_len + self.nhead) # + self.head is label
         return x
+    
     
     def decoder(self, x): 
         x = x.unsqueeze(0)
@@ -124,6 +123,7 @@ class VisionTransformer(nn.Module):
         x = self.seq_unpatchify(x)
         return x
     
+
     def mask(self, x, idx): 
         # mask the input tensor
         self.random_tensor = self.random_tensor#.to(x.device)

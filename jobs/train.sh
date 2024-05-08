@@ -3,8 +3,10 @@
 #$ -N imae_mm
 #$ -l h_rt=24:00:0
 #$ -l mem=80G
+#$ -pe mpi 2
 #$ -l gpu=2
 #$ -ac allow=EFL
+
 
 #$ -m be
 #$ -M uceckz0@ucl.ac.uk
