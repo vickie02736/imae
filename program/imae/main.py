@@ -78,7 +78,7 @@ if __name__ == "__main__":
     os.makedirs(config['valid']['save_reconstruct'], exist_ok=True)
 
     model = VisionTransformer(data_config['channels'], data_config['image_size'], config['patch_size'])
-
+    torch.save(model.state_dict(), os.path.join(config['train']['save_checkpoint'], 'init.pth'))
 
     trainer = Trainer(rank, config, train_dataset, model, args.epochs)
     evalutor = Evaluator(rank, config, valid_dataset, model, test_flag = False)

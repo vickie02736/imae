@@ -51,6 +51,7 @@ class Trainer(Engine):
         super().__init__(rank, config, dataset, model)
         self.epochs = epochs
         self.init_training_components() 
+        self.train_losses = {}
         
 
     def train_epoch(self, epoch):
@@ -97,9 +98,9 @@ class Trainer(Engine):
                 self.save_checkpoint(epoch)
             
             loss_data = {'train_losses': train_losses, 'train_losses_rollout': train_losses_rollout}
+            self.train_losses[epoch] = loss_data
 
-            self.save_losses(loss_data, self.config['train']['save_loss'], 'train_losses.json')
-            # return {'train_losses': train_losses, 'train_losses_rollout': train_losses_rollout}
+            self.save_losses(self.train_losses, self.config['train']['save_loss'], 'train_losses.json')
 
 
     def init_training_components(self): 
@@ -152,7 +153,10 @@ class Evaluator(Engine):
         self.valid_losses = {}
 
     def evaluate_epoch(self, epoch, rec_savepath, mask_ratio=None):
+
+        torch.manual_seed(epoch)
         self.model.eval()
+
         with torch.no_grad():
             loss_functions, running_losses = self.init_loss_function()  # Ensure this is correctly initialized
 
@@ -182,8 +186,8 @@ class Evaluator(Engine):
                         loss = loss_fn(output, chunk)
                         running_losses[metric][j] += loss.item()
 
-                if i == 1:  # This condition might need adjusting based on when you want to plot
-                    self.plot_rollout(origin_copy, output_chunks, target_chunks, epoch, rec_savepath)
+                if i == 10:  # This condition might need adjusting based on when you want to plot
+                    self.plot_rollout(origin_copy, origin, output_chunks, target_chunks, epoch, rec_savepath)
 
             chunk_losses = {}
             for metric, running_loss_list in running_losses.items():
@@ -196,7 +200,7 @@ class Evaluator(Engine):
             self.save_losses(self.valid_losses, self.config['valid']['save_loss'], 'valid_losses.json')
 
 
-    def plot_rollout(self, origin, output_chunks, target_chunks, idx, save_path):
+    def plot_rollout(self, origin, masked_origin, output_chunks, target_chunks, idx, save_path):
         rollout_times = len(output_chunks)
         _, ax = plt.subplots(rollout_times*2+1, self.config['seq_length'], figsize=(self.config['seq_length']*2, rollout_times*4+2))
         for j in range(self.config['seq_length']): 
@@ -205,18 +209,23 @@ class Evaluator(Engine):
             ax[0][j].set_xticks([])
             ax[0][j].set_yticks([])
             ax[0][j].set_title("Timestep {timestep} (Input)".format(timestep=j+1), fontsize=10)
+            # visualise masked input
+            ax[1][j].imshow(masked_origin[0][j][0].cpu().detach().numpy())
+            ax[1][j].set_xticks([])
+            ax[1][j].set_yticks([])
+            ax[1][j].set_title("Timestep {timestep} (Masked Input)".format(timestep=j+1), fontsize=10)
         for k in range(rollout_times): 
             for j in range(self.config['seq_length']):
                 # visualise output
-                ax[2*k+1][j].imshow(output_chunks[k][0][j][0].cpu().detach().numpy())
-                ax[2*k+1][j].set_xticks([])
-                ax[2*k+1][j].set_yticks([])
-                ax[2*k+1][j].set_title("Timestep {timestep} (Prediction)".format(timestep=j+11+k*10), fontsize=10)
-                # visualise target
-                ax[2*k+2][j].imshow(target_chunks[k][0][j][0].cpu().detach().numpy())
+                ax[2*k+2][j].imshow(output_chunks[k][0][j][0].cpu().detach().numpy())
                 ax[2*k+2][j].set_xticks([])
                 ax[2*k+2][j].set_yticks([])
-                ax[2*k+2][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11+k*10), fontsize=10)
+                ax[2*k+2][j].set_title("Timestep {timestep} (Prediction)".format(timestep=j+11+k*10), fontsize=10)
+                # visualise target
+                ax[2*k+3][j].imshow(target_chunks[k][0][j][0].cpu().detach().numpy())
+                ax[2*k+3][j].set_xticks([])
+                ax[2*k+3][j].set_yticks([])
+                ax[2*k+3][j].set_title("Timestep {timestep} (Target)".format(timestep=j+11+k*10), fontsize=10)
         plt.tight_layout()
         plt.savefig(os.path.join(save_path, f"{idx}.png"))
         plt.close()

@@ -39,7 +39,7 @@ class VisionTransformer(nn.Module):
         self.seq_patchify = torch.vmap(self.patchify)
         self.seq_unpatchify = torch.vmap(self.unpatchify)
 
-        self.batch_encoder = torch.vmap(self.encoder, in_dims=(0, None))
+        self.batch_encoder = torch.vmap(self.encoder, in_dims=(0,None,None))
         self.batch_decoder = torch.vmap(self.decoder)
 
         self.conv = nn.Conv2d(channel_num, channel_num, kernel_size = 3, padding =1)
@@ -47,12 +47,13 @@ class VisionTransformer(nn.Module):
 
 
     def forward(self, x, num_mask): 
+
         if num_mask != 0:
             weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
             idx = torch.multinomial(weights, num_mask, replacement=False)
-            x = self.batch_encoder(x, True, idx)
         else: 
-            x = self.batch_encoder(x, False)
+            idx = None
+        x = self.batch_encoder(x, False, idx)
 
         # # transformer
         x = self.transformer(x)
@@ -101,13 +102,14 @@ class VisionTransformer(nn.Module):
 
         # add binary label for masking
         # 1 for unmasked, 0 for masked
-        label = torch.ones(x.shape[0], x.shape[1], self.nhead).to(x.device) 
-        if mask_flag: 
+        label = torch.ones(x.shape[0], x.shape[1], self.nhead).to(x.device) # [10, 66, nhead]
+        if mask_flag and mask_idx is not None: 
             label[mask_idx] = 0
-        x = torch.cat((x, label), dim=2) # [10, 66, 769]
+        x = torch.cat((x, label), dim=2) 
 
         # pass through the transformer
         x = x.view(-1, self.patch_embedding_len + self.nhead) # + self.head is label
+
         return x
     
     
