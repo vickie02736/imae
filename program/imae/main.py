@@ -3,6 +3,7 @@ import os
 import sys
 sys.path.append('..')
 import yaml
+import json
 import random
 import numpy as np
 from tqdm import tqdm
@@ -15,7 +16,7 @@ from program.utils.tool import int_or_string
 
 # import wandb
 # wandb.login()
-# 
+
 
 SEED = 3409
 random.seed(SEED)
@@ -62,6 +63,12 @@ if __name__ == "__main__":
         from database.shallow_water.dataset import DataBuilder
         train_dataset = DataBuilder(data_config['train_file'], config['seq_length'], config['train']['rollout_times'], timestep=100)
         valid_dataset = DataBuilder(data_config['valid_file'], config['seq_length'], config['valid']['rollout_times'], timestep=100)
+        # if rank == 0: 
+        #     wandb.init(project="imae_sw", config ={
+        #         "database": args.database,
+        #         "batch_size": config['batch_size'],
+        #         "epochs": args.epochs,
+        #     })
 
     elif args.database == 'moving_mnist':
         # moving mnist
@@ -70,14 +77,30 @@ if __name__ == "__main__":
         from database.moving_mnist.dataset import DataBuilder
         train_dataset = DataBuilder(config['seq_length'], config['train']['rollout_times'], 'train')
         valid_dataset = DataBuilder(config['seq_length'], config['valid']['rollout_times'], 'valid')
+        # if rank == 0: 
+        #     wandb.init(project="imae_mm", config ={
+        #         "database": args.database,
+        #         "batch_size": config['batch_size'],
+        #         "epochs": args.epochs,
+        #     })
+
 
     else:
         pass
 
     os.makedirs(config['train']['save_checkpoint'], exist_ok=True)
     os.makedirs(config['valid']['save_reconstruct'], exist_ok=True)
+    losses = {}
+    with open(os.path.join(config['train']['save_loss'], 'train_losses.json'), 'w') as file:
+        json.dump(losses, file)
+    with open(os.path.join(config['valid']['save_loss'], 'valid_losses.json'), 'w') as file:
+        json.dump(losses, file)
 
-    model = VisionTransformer(data_config['channels'], data_config['image_size'], config['patch_size'])
+
+
+    model = VisionTransformer(args.database, 
+                              data_config['channels'], data_config['image_size'], config['patch_size'],
+                              num_layers = config['model']['num_layers'], nhead = config['model']['nhead'])
     torch.save(model.state_dict(), os.path.join(config['train']['save_checkpoint'], 'init.pth'))
 
     trainer = Trainer(rank, config, train_dataset, model, args.epochs)
@@ -89,6 +112,7 @@ if __name__ == "__main__":
 
     end_epoch = args.resume_epoch + args.epochs
     
+    
     for epoch in tqdm(range(args.resume_epoch, end_epoch), desc="Epoch progress"): 
-        # trainer.train_epoch(epoch)
+        trainer.train_epoch(epoch)
         evalutor.evaluate_epoch(epoch)

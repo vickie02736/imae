@@ -1,11 +1,17 @@
-batch_size: 200
+batch_size: 320
 
 # Sequence
 patch_size: 8
 seq_length: 5
 
+model: 
+  num_layers: 5
+  nhead: 16
+
 train:
-  loss_fn: "MSE"
+  loss_fn: "BCE"
+  optimizer: "RMSprop"
+  learning_rate: 0.001
   rollout_times: 2
   save_checkpoint: '../data/moving_mnist/ckpt/'
   save_loss: '../data/moving_mnist/loss/'
@@ -14,6 +20,7 @@ train:
 valid: 
   rollout_times: 2
   metric: 
+    - "BCE"
     - "MSE"
     - "RMSE"
     - "MAE" 

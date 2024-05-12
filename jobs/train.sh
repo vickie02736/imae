@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N imae_swß
+#$ -N imae_sw
 #$ -l h_rt=24:00:0
 #$ -l mem=80G
 #$ -pe mpi 2
@@ -18,8 +18,8 @@ export OMP_NUM_THREADS=2
 # echo "This script is running on "
 # hostname
 
-echo "GPU information" 
-nvidia-smi
+# echo "GPU information" 
+# nvidia-smi
 
 source /home/uceckz0/miniconda3/bin/activate
 conda activate imae
@@ -29,7 +29,7 @@ conda activate imae
 echo $(date +%d-%m-%Y_%H:%M:%S)
 torchrun --nnodes=1 --nproc_per_node=2 ../program/imae/main.py\
         --train True\
-        --epochs 600\
-        --resume-epoch 0\
+        --epochs 2\
+        --resume-epoch 2\
         --database shallow_water
 echo $(date +%d-%m-%Y_%H:%M:%S)

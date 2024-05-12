@@ -1,0 +1,8 @@
+
+Epoch progress:   0%|                                                                                                                                                                                       | 0/3 [02:21<?, ?it/s]
+Traceback (most recent call last):
+  File "/lustre/home/uceckz0/Project/imae/jobs/../program/imae/main.py", line 94, in <module>
+    train_loss = trainer.train_epoch(epoch)
+  File "/lustre/home/uceckz0/Project/imae/program/imae/engine.py", line 101, in train_epoch
+    return loss_data
+UnboundLocalError: local variable 'loss_data' referenced before assignment

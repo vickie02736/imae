@@ -3,8 +3,14 @@ batch_size: 50 #A100 128
 patch_size: 16
 seq_length: 10
 
+model: 
+  num_layers: 6
+  nhead: 6
+
 train:
   loss_fn: "MSE"
+  optimizer: "AdamW"
+  learning_rate: 0.0001
   rollout_times: 2
   save_checkpoint: '../data/shallow_water/ckpt/'
   save_loss: '../data/shallow_water/loss/'

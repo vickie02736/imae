@@ -7,7 +7,7 @@ import torch.nn as nn
 
 class VisionTransformer(nn.Module): 
 
-    def __init__(self, channel_num, image_len, patch_len, nhead=8):
+    def __init__(self, database, channel_num, image_len, patch_len, num_layers=6, nhead=8):
 
         super().__init__()
 
@@ -21,60 +21,65 @@ class VisionTransformer(nn.Module):
 
         self.start_embedding = nn.Parameter(torch.zeros(1, self.patch_embedding_len))
         self.end_embedding = nn.Parameter(torch.zeros(1, self.patch_embedding_len)) 
-
         self.pos_embedding = nn.Parameter(torch.randn(self.patch_embedding_num+2, self.patch_embedding_len))*0.02
-        self.pos_embedding = self.pos_embedding
 
         self.random_tensor = torch.randn(self.channel_num,self.image_len,self.image_len) # for random masking
         
         self.nhead=nhead
-        transform_layer = nn.TransformerEncoderLayer(d_model=self.patch_embedding_len + self.nhead, nhead=self.nhead, dropout=0.0, batch_first=True)
-        self.transformer = nn.TransformerEncoder(transform_layer, num_layers=6)
+        transform_layer = nn.TransformerEncoderLayer(d_model=self.patch_embedding_len, nhead=self.nhead, dropout=0.0, batch_first=True)
+        self.num_layers = num_layers
+        self.transformer = nn.TransformerEncoder(transform_layer, num_layers=self.num_layers)
 
         norm_layer=nn.LayerNorm
-        self.norm = norm_layer(self.patch_embedding_len + self.nhead)
-
-        self.batch_mask = torch.vmap(self.mask)
+        self.norm = norm_layer(self.patch_embedding_len)
 
         self.seq_patchify = torch.vmap(self.patchify)
         self.seq_unpatchify = torch.vmap(self.unpatchify)
 
-        self.batch_encoder = torch.vmap(self.encoder, in_dims=(0,None,None))
+        self.batch_encoder = torch.vmap(self.encoder)
         self.batch_decoder = torch.vmap(self.decoder)
 
-        self.conv = nn.Conv2d(channel_num, channel_num, kernel_size = 3, padding =1)
-        self.seq_conv = torch.vmap(self.conv)
-
-
-    def forward(self, x, num_mask): 
-
-        if num_mask != 0:
-            weights = torch.ones(x.shape[1]).expand(x.shape[0], -1)
-            idx = torch.multinomial(weights, num_mask, replacement=False)
+        self.database = database
+        if self.database == 'shallow_water':
+            self.conv = nn.Conv2d(channel_num, channel_num, kernel_size = 3, padding =1)
+            self.seq_conv = torch.vmap(self.conv)
+        elif self.database == 'moving_mnist':
+            self.conv1 = nn.Conv2d(channel_num, 4*channel_num, kernel_size = 3, padding =1)
+            self.conv2 = nn.Conv2d(4*channel_num, 2*channel_num, kernel_size = 3, padding =1)
+            self.conv3 = nn.Conv2d(2*channel_num, channel_num, kernel_size = 3, padding =1)
+            self.seq_conv1 = torch.vmap(self.conv1)
+            self.seq_conv2 = torch.vmap(self.conv2)
+            self.seq_conv3 = torch.vmap(self.conv3)
+            self.sigmoid = nn.Sigmoid()
         else: 
-            idx = None
-        x = self.batch_encoder(x, False, idx)
+            pass
 
-        # # transformer
+
+    def forward(self, x): 
+        x = self.batch_encoder(x)
         x = self.transformer(x)
         x = self.norm(x)
-
-        # # decode
         x = self.batch_decoder(x)
 
         # conv
         x = x.permute(1,0,2,3,4)
-        x = self.seq_conv(x)
+        if self.database == 'shallow_water':
+            x = self.seq_conv(x)
+        elif self.database == 'moving_mnist':
+            x = self.seq_conv1(x)
+            x = x.float()
+            x = self.seq_conv2(x)
+            x = x.float()
+            x = self.seq_conv3(x)
+            x = self.sigmoid(x)
+        else:
+            pass
         x = x.permute(1,0,2,3,4)
-
         return x
  
  
     def patchify(self, x): 
-        # Unfold the height and width dimensions
         x = x.unfold(1, self.patch_len, self.patch_len).unfold(2, self.patch_len, self.patch_len)
-
-        # Reshape the unfolded dimensions to get the patches 
         x = x.permute(1, 2, 0, 3, 4)
         x = x.reshape(-1, self. channel_num, self.patch_len, self.patch_len)
         x = x.reshape(self.patch_embedding_num, -1)
@@ -87,48 +92,22 @@ class VisionTransformer(nn.Module):
         return x
     
 
-    def encoder(self, x, mask_flag=False, mask_idx=None): 
-        # apply patchify to the sequence
+    def encoder(self, x): 
         x = self.seq_patchify(x)
-
-        # add start and end tokens
         start_embeddings = self.start_embedding.repeat(x.shape[0], 1, 1)
         end_embeddings = self.end_embedding.repeat(x.shape[0], 1, 1)
-        x = torch.cat((start_embeddings, x, end_embeddings), 1)
-
-        # add positional embeddings
+        x = torch.cat((start_embeddings, x, end_embeddings), 1) # add start and end tokens
         pos_embeddings = self.pos_embedding.repeat(x.shape[0], 1, 1).to(x.device)
-        x += pos_embeddings # [10, 66, 768]
-
-        # add binary label for masking
-        # 1 for unmasked, 0 for masked
-        label = torch.ones(x.shape[0], x.shape[1], self.nhead).to(x.device) # [10, 66, nhead]
-        if mask_flag and mask_idx is not None: 
-            label[mask_idx] = 0
-        x = torch.cat((x, label), dim=2) 
-
-        # pass through the transformer
-        x = x.view(-1, self.patch_embedding_len + self.nhead) # + self.head is label
-
+        x += pos_embeddings # add positional embeddings
+        x = x.view(-1, self.patch_embedding_len)
         return x
     
     
     def decoder(self, x): 
         x = x.unsqueeze(0)
-        x = x.view(-1, self.patch_embedding_num+2, self.patch_embedding_len+self.nhead)
+        x = x.view(-1, self.patch_embedding_num+2, self.patch_embedding_len)
+        x = x[:, 1:-1, :] # remove start and end tokens
 
-        # remove label
-        x = x[:, :, :-self.nhead]
-        # remove start and end tokens
-        x = x[:, 1:65, :]
-        # apply unpatchify to the sequence
         x = self.seq_unpatchify(x)
-        return x
-    
-
-    def mask(self, x, idx): 
-        # mask the input tensor
-        self.random_tensor = self.random_tensor#.to(x.device)
-        x[idx] = self.random_tensor
         return x
     
