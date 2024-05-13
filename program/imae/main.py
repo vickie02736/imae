@@ -12,7 +12,8 @@ import torch.distributed as dist
 
 from model import VisionTransformer
 from engine import Trainer, Evaluator
-from program.utils.tool import int_or_string
+from program.utils.tools import int_or_string
+
 
 # import wandb
 # wandb.login()
@@ -47,8 +48,9 @@ def get_args_parser():
 
 #-------------------------------------------------------------------------------------------
 
- 
-if __name__ == "__main__":
+
+def main():
+
     parser = get_args_parser()
     args = parser.parse_args()
 
@@ -63,6 +65,7 @@ if __name__ == "__main__":
         from database.shallow_water.dataset import DataBuilder
         train_dataset = DataBuilder(data_config['train_file'], config['seq_length'], config['train']['rollout_times'], timestep=100)
         valid_dataset = DataBuilder(data_config['valid_file'], config['seq_length'], config['valid']['rollout_times'], timestep=100)
+
         # if rank == 0: 
         #     wandb.init(project="imae_sw", config ={
         #         "database": args.database,
@@ -77,42 +80,51 @@ if __name__ == "__main__":
         from database.moving_mnist.dataset import DataBuilder
         train_dataset = DataBuilder(config['seq_length'], config['train']['rollout_times'], 'train')
         valid_dataset = DataBuilder(config['seq_length'], config['valid']['rollout_times'], 'valid')
+
         # if rank == 0: 
         #     wandb.init(project="imae_mm", config ={
         #         "database": args.database,
         #         "batch_size": config['batch_size'],
         #         "epochs": args.epochs,
         #     })
-
-
     else:
         pass
 
+
     os.makedirs(config['train']['save_checkpoint'], exist_ok=True)
     os.makedirs(config['valid']['save_reconstruct'], exist_ok=True)
-    losses = {}
-    with open(os.path.join(config['train']['save_loss'], 'train_losses.json'), 'w') as file:
-        json.dump(losses, file)
-    with open(os.path.join(config['valid']['save_loss'], 'valid_losses.json'), 'w') as file:
-        json.dump(losses, file)
-
-
 
     model = VisionTransformer(args.database, 
                               data_config['channels'], data_config['image_size'], config['patch_size'],
                               num_layers = config['model']['num_layers'], nhead = config['model']['nhead'])
     torch.save(model.state_dict(), os.path.join(config['train']['save_checkpoint'], 'init.pth'))
 
-    trainer = Trainer(rank, config, train_dataset, model, args.epochs)
-    evalutor = Evaluator(rank, config, valid_dataset, model, test_flag = False)
+    trainer = Trainer(rank, config, train_dataset, model, args.epochs, args.resume_epoch)
+    evalutor = Evaluator(rank, config, valid_dataset, model)
 
-    if args.resume_epoch != 0: 
-        trainer.setup()
+
+    trainer.setup()
+    evalutor.setup()
+    if args.resume_epoch == 0: 
+        losses = {}
+        os.makedirs(config['train']['save_loss'], exist_ok=True)
+        os.makedirs(config['valid']['save_loss'], exist_ok=True)
+        with open(os.path.join(config['train']['save_loss'], 'train_losses.json'), 'w') as file:
+            json.dump(losses, file)
+        with open(os.path.join(config['valid']['save_loss'], 'valid_losses.json'), 'w') as file:
+            json.dump(losses, file)
+    else:
+
         trainer.load_checkpoint(args.resume_epoch)
 
     end_epoch = args.resume_epoch + args.epochs
     
-    
     for epoch in tqdm(range(args.resume_epoch, end_epoch), desc="Epoch progress"): 
         trainer.train_epoch(epoch)
         evalutor.evaluate_epoch(epoch)
+
+
+
+if __name__ == "__main__":
+    
+    main()

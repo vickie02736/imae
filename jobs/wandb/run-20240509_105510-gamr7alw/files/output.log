@@ -1,6 +1,0 @@
-
-Epoch progress:   0%|                                                                                                                                                                                       | 0/3 [03:02<?, ?it/s]
-Traceback (most recent call last):
-  File "/lustre/home/uceckz0/Project/imae/jobs/../program/imae/main.py", line 96, in <module>
-    combine_loss = {**train_loss, **valid_loss}
-TypeError: 'NoneType' object is not a mapping

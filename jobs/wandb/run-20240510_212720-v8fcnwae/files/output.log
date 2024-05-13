@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/lustre/home/uceckz0/Project/imae/jobs/../program/imae/main.py", line 95, in <module>
-    model = VisionTransformer(args.database,
-  File "/lustre/home/uceckz0/Project/imae/program/imae/model.py", line 38, in __init__
-    self.batch_mask = torch.vmap(self.mask)
-  File "/home/uceckz0/miniconda3/envs/imae/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1688, in __getattr__
-    raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
-AttributeError: 'VisionTransformer' object has no attribute 'mask'

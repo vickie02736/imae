@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import math
+from piqa import SSIM
 
 
 class RMSELoss(nn.Module):
@@ -25,3 +26,21 @@ class PSNRLoss(nn.Module):
         if mse == 0:
             return torch.tensor(float('inf'))
         return 20 * torch.log10(self.max_pixel / torch.sqrt(mse))
+    
+
+class SSIMLoss():
+    def __init__(self, device):
+        self.ssim_loss = SSIM().to(device)
+        self.device = device
+
+    def forward(self, output, chunk):
+            output = (output - output.min()) / (output.max() - output.min())
+            chunk = (chunk - chunk.min()) / (chunk.max() - chunk.min())
+            if output.shape[2] == 1:
+                output = output.repeat(1, 1, 3, 1, 1)
+                chunk = chunk.repeat(1, 1, 3, 1, 1)
+            ssim_values = torch.zeros(len(output), len(output[0]), device=self.device)
+            for i in range(len(output[0])):
+                ssim_values[:, i] = self.ssim_loss(output[:, i], chunk[:, i])
+            loss = ssim_values.mean(dim=1)
+            return loss.sum()

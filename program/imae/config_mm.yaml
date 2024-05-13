@@ -1,4 +1,4 @@
-batch_size: 320
+batch_size: 128
 
 # Sequence
 patch_size: 8
