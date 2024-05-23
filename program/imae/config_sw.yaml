@@ -2,6 +2,7 @@ batch_size: 25 #A100 128
 
 patch_size: 16
 seq_length: 10
+mask_method: "zeros"
 
 model: 
   num_layers: 6

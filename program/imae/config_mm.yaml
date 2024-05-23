@@ -3,10 +3,11 @@ batch_size: 128
 # Sequence
 patch_size: 8
 seq_length: 5
+mask_method: "random"
 
 model: 
   num_layers: 5
-  nhead: 16
+  nhead: 8
 
 train:
   loss_fn: "BCE"

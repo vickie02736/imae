@@ -1,0 +1,417 @@
+2024-05-19 18:18:36,846 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:18:36,847 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:18:36,847 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:18:36,847 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:18:36,847 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2024-05-19 18:18:36,847 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:18:36,847 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:18:36,847 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:18:36,848 INFO    MainThread:214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:18:36,848 INFO    MainThread:214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181836-mh28duva/logs/debug.log
+2024-05-19 18:18:36,848 INFO    MainThread:214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181836-mh28duva/logs/debug-internal.log
+2024-05-19 18:18:36,848 INFO    MainThread:214179 [wandb_init.py:_jupyter_setup():466] configuring jupyter hooks <wandb.sdk.wandb_init._WandbInit object at 0x7ffb343b05e0>
+2024-05-19 18:18:36,848 INFO    MainThread:214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:18:36,848 INFO    MainThread:214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {}
+config: {}
+2024-05-19 18:18:36,848 INFO    MainThread:214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:18:36,848 INFO    MainThread:214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:18:36,850 INFO    MainThread:214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:18:36,853 INFO    MainThread:214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:18:36,855 INFO    MainThread:214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:18:36,856 INFO    MainThread:214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:18:36,856 INFO    MainThread:214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:18:36,886 INFO    MainThread:214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:18:37,265 INFO    MainThread:214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:18:37,368 INFO    MainThread:214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:18:37,369 INFO    MainThread:214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:18:40,732 INFO    MainThread:214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:18:40,733 INFO    MainThread:214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:18:40,733 INFO    MainThread:214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:18:40,733 INFO    MainThread:214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:18:40,739 INFO    MainThread:214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:18:41,081 INFO    MainThread:214179 [jupyter.py:save_ipynb():373] not saving jupyter notebook
+2024-05-19 18:18:41,082 INFO    MainThread:214179 [wandb_init.py:_pause_backend():431] pausing backend
+2024-05-19 18:18:41,095 INFO    MainThread:214179 [wandb_init.py:_resume_backend():436] resuming backend
+2024-05-19 18:18:46,511 INFO    MainThread:214179 [pyagent.py:run():323] Starting sweep agent: entity=None, project=None, count=10
+2024-05-19 18:18:54,227 WARNING MsgRouterThr:214179 [router.py:message_loop():77] message_loop has been closed
+2024-05-19 18:18:55,144 ERROR   Thread-7  :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:18:57,144 INFO    Thread-7  :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'sweep_id': 'ftdoknyt', 'run_id': 'mjkkbmyo', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-mjkkbmyo.yaml'}
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181857-mjkkbmyo/logs/debug.log
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181857-mjkkbmyo/logs/debug-internal.log
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:18:57,146 INFO    Thread-7  :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 32, 'epochs': 20, 'learning_rate': 0.0001}
+config: {}
+2024-05-19 18:18:57,147 INFO    Thread-7  :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:18:57,147 INFO    Thread-7  :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:18:57,154 INFO    Thread-7  :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:18:57,155 INFO    Thread-7  :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:18:57,168 INFO    Thread-7  :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 32, 'epochs': 20, 'learning_rate': 0.0001}
+2024-05-19 18:18:57,170 INFO    Thread-7  :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:18:57,171 INFO    Thread-7  :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:18:57,171 INFO    Thread-7  :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:18:57,200 INFO    Thread-7  :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:18:57,568 INFO    Thread-7  :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:18:57,672 INFO    Thread-7  :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:18:57,672 INFO    Thread-7  :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:19:00,748 INFO    Thread-7  :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:19:00,748 INFO    Thread-7  :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:19:00,749 INFO    Thread-7  :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:19:00,749 INFO    Thread-7  :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:19:00,750 INFO    Thread-7  :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:19:09,043 INFO    Thread-7  :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/mjkkbmyo
+2024-05-19 18:19:09,046 INFO    Thread-7  :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:19:09,047 INFO    Thread-7  :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:19:09,049 INFO    Thread-7  :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:19:12,493 INFO    Thread-7  :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:19:12,494 INFO    Thread-7  :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:19:12,510 INFO    Thread-7  :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:19:13,637 ERROR   Thread-10 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:19:15,450 INFO    Thread-10 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:19:15,451 INFO    Thread-10 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:19:15,451 INFO    Thread-10 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:19:15,451 INFO    Thread-10 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:19:15,451 INFO    Thread-10 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': 'lyo31pi9', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-lyo31pi9.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181915-lyo31pi9/logs/debug.log
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181915-lyo31pi9/logs/debug-internal.log
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 64, 'epochs': 10, 'learning_rate': 0.0001}
+config: {}
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:19:15,452 INFO    Thread-10 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:19:15,461 INFO    Thread-10 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:19:15,461 INFO    Thread-10 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:19:15,475 INFO    Thread-10 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 64, 'epochs': 10, 'learning_rate': 0.0001}
+2024-05-19 18:19:15,478 INFO    Thread-10 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:19:15,478 INFO    Thread-10 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:19:15,478 INFO    Thread-10 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:19:15,510 INFO    Thread-10 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:19:15,853 INFO    Thread-10 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:19:15,958 INFO    Thread-10 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:19:15,958 INFO    Thread-10 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:19:19,053 INFO    Thread-10 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:19:19,054 INFO    Thread-10 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:19:19,055 INFO    Thread-10 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:19:19,055 INFO    Thread-10 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:19:19,056 INFO    Thread-10 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:19:20,044 INFO    Thread-10 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/lyo31pi9
+2024-05-19 18:19:20,044 INFO    Thread-10 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:19:20,045 INFO    Thread-10 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:19:20,045 INFO    Thread-10 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:19:23,516 INFO    Thread-10 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:19:23,516 INFO    Thread-10 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:19:23,529 INFO    Thread-10 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:19:28,681 ERROR   Thread-13 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:19:30,249 INFO    Thread-13 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': '4e13ca31', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-4e13ca31.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181930-4e13ca31/logs/debug.log
+2024-05-19 18:19:30,250 INFO    Thread-13 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181930-4e13ca31/logs/debug-internal.log
+2024-05-19 18:19:30,251 INFO    Thread-13 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:19:30,251 INFO    Thread-13 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 64, 'epochs': 10, 'learning_rate': 0.001}
+config: {}
+2024-05-19 18:19:30,251 INFO    Thread-13 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:19:30,251 INFO    Thread-13 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:19:30,258 INFO    Thread-13 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:19:30,259 INFO    Thread-13 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:19:30,273 INFO    Thread-13 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 64, 'epochs': 10, 'learning_rate': 0.001}
+2024-05-19 18:19:30,277 INFO    Thread-13 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:19:30,277 INFO    Thread-13 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:19:30,277 INFO    Thread-13 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:19:30,310 INFO    Thread-13 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:19:30,658 INFO    Thread-13 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:19:30,758 INFO    Thread-13 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:19:30,758 INFO    Thread-13 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:19:33,838 INFO    Thread-13 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:19:33,838 INFO    Thread-13 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:19:33,838 INFO    Thread-13 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:19:33,838 INFO    Thread-13 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:19:33,839 INFO    Thread-13 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:19:34,445 INFO    Thread-13 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/4e13ca31
+2024-05-19 18:19:34,445 INFO    Thread-13 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:19:34,446 INFO    Thread-13 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:19:34,446 INFO    Thread-13 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:19:37,820 INFO    Thread-13 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:19:37,820 INFO    Thread-13 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:19:37,832 INFO    Thread-13 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:19:40,020 ERROR   Thread-16 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:19:41,646 INFO    Thread-16 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:19:41,647 INFO    Thread-16 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:19:41,647 INFO    Thread-16 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:19:41,647 INFO    Thread-16 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:19:41,648 INFO    Thread-16 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': 'mj9v1q49', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-mj9v1q49.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:19:41,648 INFO    Thread-16 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:19:41,648 INFO    Thread-16 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:19:41,648 INFO    Thread-16 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:19:41,648 INFO    Thread-16 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181941-mj9v1q49/logs/debug.log
+2024-05-19 18:19:41,648 INFO    Thread-16 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181941-mj9v1q49/logs/debug-internal.log
+2024-05-19 18:19:41,648 INFO    Thread-16 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:19:41,648 INFO    Thread-16 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 64, 'epochs': 20, 'learning_rate': 0.01}
+config: {}
+2024-05-19 18:19:41,649 INFO    Thread-16 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:19:41,649 INFO    Thread-16 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:19:41,656 INFO    Thread-16 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:19:41,657 INFO    Thread-16 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:19:41,670 INFO    Thread-16 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 64, 'epochs': 20, 'learning_rate': 0.01}
+2024-05-19 18:19:41,673 INFO    Thread-16 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:19:41,673 INFO    Thread-16 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:19:41,673 INFO    Thread-16 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:19:41,705 INFO    Thread-16 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:19:42,048 INFO    Thread-16 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:19:42,149 INFO    Thread-16 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:19:42,149 INFO    Thread-16 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:19:45,281 INFO    Thread-16 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:19:45,281 INFO    Thread-16 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:19:45,281 INFO    Thread-16 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:19:45,282 INFO    Thread-16 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:19:45,282 INFO    Thread-16 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:19:49,341 INFO    Thread-16 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/mj9v1q49
+2024-05-19 18:19:49,341 INFO    Thread-16 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:19:49,342 INFO    Thread-16 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:19:49,342 INFO    Thread-16 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:19:52,043 INFO    Thread-16 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:19:52,043 INFO    Thread-16 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:19:52,054 INFO    Thread-16 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:19:55,222 ERROR   Thread-19 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:19:56,847 INFO    Thread-19 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': 'fasc0kn1', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-fasc0kn1.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181956-fasc0kn1/logs/debug.log
+2024-05-19 18:19:56,848 INFO    Thread-19 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_181956-fasc0kn1/logs/debug-internal.log
+2024-05-19 18:19:56,849 INFO    Thread-19 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:19:56,849 INFO    Thread-19 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 64, 'epochs': 10, 'learning_rate': 0.001}
+config: {}
+2024-05-19 18:19:56,849 INFO    Thread-19 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:19:56,849 INFO    Thread-19 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:19:56,857 INFO    Thread-19 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:19:56,857 INFO    Thread-19 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:19:56,871 INFO    Thread-19 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 64, 'epochs': 10, 'learning_rate': 0.001}
+2024-05-19 18:19:56,873 INFO    Thread-19 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:19:56,874 INFO    Thread-19 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:19:56,874 INFO    Thread-19 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:19:56,907 INFO    Thread-19 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:19:57,248 INFO    Thread-19 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:19:57,347 INFO    Thread-19 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:19:57,348 INFO    Thread-19 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:20:00,434 INFO    Thread-19 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:20:00,434 INFO    Thread-19 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:20:00,434 INFO    Thread-19 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:20:00,434 INFO    Thread-19 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:20:00,435 INFO    Thread-19 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:20:01,937 INFO    Thread-19 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/fasc0kn1
+2024-05-19 18:20:01,938 INFO    Thread-19 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:20:01,938 INFO    Thread-19 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:20:01,938 INFO    Thread-19 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:20:04,851 INFO    Thread-19 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:20:04,851 INFO    Thread-19 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:20:04,862 INFO    Thread-19 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:20:16,002 ERROR   Thread-22 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:20:17,587 INFO    Thread-22 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:20:17,588 INFO    Thread-22 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:20:17,588 INFO    Thread-22 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:20:17,588 INFO    Thread-22 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:20:17,588 INFO    Thread-22 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': '82knr8kb', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-82knr8kb.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:20:17,588 INFO    Thread-22 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:20:17,588 INFO    Thread-22 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:20:17,589 INFO    Thread-22 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:20:17,589 INFO    Thread-22 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182017-82knr8kb/logs/debug.log
+2024-05-19 18:20:17,589 INFO    Thread-22 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182017-82knr8kb/logs/debug-internal.log
+2024-05-19 18:20:17,589 INFO    Thread-22 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:20:17,589 INFO    Thread-22 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 64, 'epochs': 5, 'learning_rate': 0.001}
+config: {}
+2024-05-19 18:20:17,589 INFO    Thread-22 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:20:17,589 INFO    Thread-22 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:20:17,597 INFO    Thread-22 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:20:17,598 INFO    Thread-22 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:20:17,611 INFO    Thread-22 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 64, 'epochs': 5, 'learning_rate': 0.001}
+2024-05-19 18:20:17,614 INFO    Thread-22 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:20:17,614 INFO    Thread-22 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:20:17,614 INFO    Thread-22 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:20:17,649 INFO    Thread-22 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:20:17,981 INFO    Thread-22 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:20:18,079 INFO    Thread-22 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:20:18,079 INFO    Thread-22 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:20:21,173 INFO    Thread-22 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:20:21,173 INFO    Thread-22 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:20:21,174 INFO    Thread-22 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:20:21,174 INFO    Thread-22 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:20:21,175 INFO    Thread-22 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:20:23,638 INFO    Thread-22 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/82knr8kb
+2024-05-19 18:20:23,638 INFO    Thread-22 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:20:23,638 INFO    Thread-22 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:20:23,639 INFO    Thread-22 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:20:26,262 INFO    Thread-22 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:20:26,262 INFO    Thread-22 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:20:26,273 INFO    Thread-22 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:20:31,466 ERROR   Thread-25 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:20:33,056 INFO    Thread-25 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:20:33,056 INFO    Thread-25 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': 'jphoemgx', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-jphoemgx.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182033-jphoemgx/logs/debug.log
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182033-jphoemgx/logs/debug-internal.log
+2024-05-19 18:20:33,057 INFO    Thread-25 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:20:33,058 INFO    Thread-25 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 16, 'epochs': 20, 'learning_rate': 0.01}
+config: {}
+2024-05-19 18:20:33,058 INFO    Thread-25 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:20:33,058 INFO    Thread-25 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:20:33,065 INFO    Thread-25 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:20:33,066 INFO    Thread-25 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:20:33,080 INFO    Thread-25 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 16, 'epochs': 20, 'learning_rate': 0.01}
+2024-05-19 18:20:33,083 INFO    Thread-25 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:20:33,083 INFO    Thread-25 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:20:33,083 INFO    Thread-25 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:20:33,116 INFO    Thread-25 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:20:33,449 INFO    Thread-25 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:20:33,568 INFO    Thread-25 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:20:33,569 INFO    Thread-25 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:20:36,649 INFO    Thread-25 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:20:36,650 INFO    Thread-25 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:20:36,650 INFO    Thread-25 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:20:36,650 INFO    Thread-25 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:20:36,651 INFO    Thread-25 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:20:44,546 INFO    Thread-25 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/jphoemgx
+2024-05-19 18:20:44,551 INFO    Thread-25 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:20:44,637 INFO    Thread-25 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:20:44,637 INFO    Thread-25 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:20:47,773 INFO    Thread-25 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:20:47,773 INFO    Thread-25 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:20:47,787 INFO    Thread-25 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:20:51,982 ERROR   Thread-28 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:20:53,549 INFO    Thread-28 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': '2w6ohyqu', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-2w6ohyqu.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182053-2w6ohyqu/logs/debug.log
+2024-05-19 18:20:53,551 INFO    Thread-28 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182053-2w6ohyqu/logs/debug-internal.log
+2024-05-19 18:20:53,552 INFO    Thread-28 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:20:53,552 INFO    Thread-28 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 32, 'epochs': 10, 'learning_rate': 0.01}
+config: {}
+2024-05-19 18:20:53,552 INFO    Thread-28 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:20:53,552 INFO    Thread-28 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:20:53,560 INFO    Thread-28 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:20:53,561 INFO    Thread-28 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:20:53,575 INFO    Thread-28 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 32, 'epochs': 10, 'learning_rate': 0.01}
+2024-05-19 18:20:53,583 INFO    Thread-28 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:20:53,583 INFO    Thread-28 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:20:53,584 INFO    Thread-28 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:20:53,618 INFO    Thread-28 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:20:54,000 INFO    Thread-28 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:20:54,103 INFO    Thread-28 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:20:54,103 INFO    Thread-28 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:20:57,246 INFO    Thread-28 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:20:57,247 INFO    Thread-28 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:20:57,247 INFO    Thread-28 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:20:57,247 INFO    Thread-28 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:20:57,248 INFO    Thread-28 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:20:59,847 INFO    Thread-28 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/2w6ohyqu
+2024-05-19 18:20:59,847 INFO    Thread-28 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:20:59,848 INFO    Thread-28 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:20:59,848 INFO    Thread-28 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:21:03,170 INFO    Thread-28 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:21:03,171 INFO    Thread-28 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:21:03,181 INFO    Thread-28 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:21:07,331 ERROR   Thread-31 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:21:08,952 INFO    Thread-31 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:21:08,953 INFO    Thread-31 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:21:08,953 INFO    Thread-31 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:21:08,953 INFO    Thread-31 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:21:08,953 INFO    Thread-31 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': 'silil2yx', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-silil2yx.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:21:08,954 INFO    Thread-31 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:21:08,954 INFO    Thread-31 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:21:08,954 INFO    Thread-31 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:21:08,954 INFO    Thread-31 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182108-silil2yx/logs/debug.log
+2024-05-19 18:21:08,954 INFO    Thread-31 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182108-silil2yx/logs/debug-internal.log
+2024-05-19 18:21:08,954 INFO    Thread-31 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:21:08,954 INFO    Thread-31 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 16, 'epochs': 20, 'learning_rate': 0.001}
+config: {}
+2024-05-19 18:21:08,954 INFO    Thread-31 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:21:08,955 INFO    Thread-31 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:21:08,962 INFO    Thread-31 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:21:08,962 INFO    Thread-31 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:21:08,976 INFO    Thread-31 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 16, 'epochs': 20, 'learning_rate': 0.001}
+2024-05-19 18:21:08,979 INFO    Thread-31 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:21:08,979 INFO    Thread-31 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:21:08,979 INFO    Thread-31 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:21:09,012 INFO    Thread-31 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:21:09,363 INFO    Thread-31 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:21:09,462 INFO    Thread-31 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:21:09,462 INFO    Thread-31 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:21:12,596 INFO    Thread-31 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:21:12,596 INFO    Thread-31 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:21:12,596 INFO    Thread-31 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:21:12,597 INFO    Thread-31 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:21:12,597 INFO    Thread-31 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:21:47,554 INFO    Thread-31 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/silil2yx
+2024-05-19 18:21:47,554 INFO    Thread-31 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:21:47,637 INFO    Thread-31 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:21:47,637 INFO    Thread-31 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:21:50,602 INFO    Thread-31 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:21:50,603 INFO    Thread-31 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:21:50,616 INFO    Thread-31 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:21:54,740 ERROR   Thread-34 :214179 [jupyter.py:notebook_metadata():224] Failed to detect the name of this notebook, you can set it manually with the WANDB_NOTEBOOK_NAME environment variable to enable code saving.
+2024-05-19 18:21:56,355 INFO    Thread-34 :214179 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_setup.py:_flush():76] Configure stats pid to 214179
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_setup.py:_flush():76] Loading settings from /home/uceckz0/.config/wandb/settings
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_setup.py:_flush():76] Loading settings from /lustre/home/uceckz0/Project/imae/jobs/wandb/settings
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'your-project-name', 'entity': 'vickie02736', 'root_dir': '/lustre/home/uceckz0/Project/imae/jobs', 'run_id': '9xlpfmed', 'sweep_param_path': '/lustre/home/uceckz0/Project/imae/jobs/wandb/sweep-ftdoknyt/config-9xlpfmed.yaml', 'sweep_id': 'ftdoknyt'}
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_init.py:_log_setup():520] Logging user logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182156-9xlpfmed/logs/debug.log
+2024-05-19 18:21:56,356 INFO    Thread-34 :214179 [wandb_init.py:_log_setup():521] Logging internal logs to /lustre/home/uceckz0/Project/imae/jobs/wandb/run-20240519_182156-9xlpfmed/logs/debug-internal.log
+2024-05-19 18:21:56,357 INFO    Thread-34 :214179 [wandb_init.py:init():560] calling init triggers
+2024-05-19 18:21:56,357 INFO    Thread-34 :214179 [wandb_init.py:init():567] wandb.init called with sweep_config: {'batch_size': 64, 'epochs': 20, 'learning_rate': 0.001}
+config: {}
+2024-05-19 18:21:56,357 INFO    Thread-34 :214179 [wandb_init.py:init():610] starting backend
+2024-05-19 18:21:56,357 INFO    Thread-34 :214179 [wandb_init.py:init():614] setting up manager
+2024-05-19 18:21:56,364 INFO    Thread-34 :214179 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-19 18:21:56,365 INFO    Thread-34 :214179 [wandb_init.py:init():622] backend started and connected
+2024-05-19 18:21:56,378 INFO    Thread-34 :214179 [wandb_run.py:_config_callback():1376] config_cb None None {'batch_size': 64, 'epochs': 20, 'learning_rate': 0.001}
+2024-05-19 18:21:56,383 INFO    Thread-34 :214179 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-19 18:21:56,383 INFO    Thread-34 :214179 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-19 18:21:56,383 INFO    Thread-34 :214179 [wandb_init.py:init():711] updated telemetry
+2024-05-19 18:21:56,416 INFO    Thread-34 :214179 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-19 18:21:56,774 INFO    Thread-34 :214179 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-19 18:21:56,874 INFO    Thread-34 :214179 [wandb_run.py:_on_init():2405] got version response 
+2024-05-19 18:21:56,874 INFO    Thread-34 :214179 [wandb_init.py:init():795] starting run threads in backend
+2024-05-19 18:22:00,010 INFO    Thread-34 :214179 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-19 18:22:00,010 INFO    Thread-34 :214179 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-19 18:22:00,010 INFO    Thread-34 :214179 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-19 18:22:00,010 INFO    Thread-34 :214179 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-19 18:22:00,011 INFO    Thread-34 :214179 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-19 18:22:11,937 INFO    Thread-34 :214179 [wandb_run.py:_finish():2103] finishing run vickie02736/your-project-name/9xlpfmed
+2024-05-19 18:22:11,939 INFO    Thread-34 :214179 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-19 18:22:11,940 INFO    Thread-34 :214179 [wandb_run.py:_restore():2326] restore
+2024-05-19 18:22:11,941 INFO    Thread-34 :214179 [wandb_run.py:_restore():2332] restore done
+2024-05-19 18:22:15,504 INFO    Thread-34 :214179 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-19 18:22:15,505 INFO    Thread-34 :214179 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-19 18:22:15,520 INFO    Thread-34 :214179 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-19 18:22:15,528 INFO    MainThread:214179 [jupyter.py:save_ipynb():373] not saving jupyter notebook
+2024-05-19 18:22:15,528 INFO    MainThread:214179 [wandb_init.py:_pause_backend():431] pausing backend

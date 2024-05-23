@@ -87,13 +87,12 @@ class Trainer(Engine):
         total_predict_loss = 0.0
         total_rollout_loss = 0.0
         for i, sample in enumerate(self.dataloader):
-            start_time = time.time()
             origin = sample["Input"].float().to(self.device)
             target = sample["Target"].float().to(self.device)
             target_chunks = torch.chunk(target, self.config['train']['rollout_times'], dim=1)
 
             with torch.cuda.amp.autocast():
-                origin = mask(origin)
+                origin = mask(origin, mask_mtd=self.config["mask_method"])
                 output = self.model(origin)
                 predict_loss = self.loss_fn(output, target_chunks[0])
                 output = self.model(output)
@@ -191,8 +190,7 @@ class Evaluator(Engine):
 
                 origin_before_masked = sample["Input"].float().to(self.device)
                 origin_before_masked_ = copy.deepcopy(origin_before_masked)
-                # origin =  self.mask(origin_before_masked)
-                origin = mask(origin_before_masked)
+                origin = mask(origin_before_masked, mask_mtd=self.config["mask_method"])
                 target = sample["Target"].float().to(self.device)
                 target_chunks = torch.chunk(target, self.config['valid']['rollout_times'], dim=1)
                 origin_ = copy.deepcopy(origin)

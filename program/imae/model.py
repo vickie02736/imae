@@ -44,12 +44,12 @@ class VisionTransformer(nn.Module):
             self.conv = nn.Conv2d(channel_num, channel_num, kernel_size = 3, padding =1)
             self.seq_conv = torch.vmap(self.conv)
         elif self.database == 'moving_mnist':
-            self.conv1 = nn.Conv2d(channel_num, 4*channel_num, kernel_size = 3, padding =1)
-            self.conv2 = nn.Conv2d(4*channel_num, 2*channel_num, kernel_size = 3, padding =1)
-            self.conv3 = nn.Conv2d(2*channel_num, channel_num, kernel_size = 3, padding =1)
+            self.conv1 = nn.Conv2d(channel_num, 3*channel_num, kernel_size = 3, padding =1)
+            self.conv2 = nn.Conv2d(3*channel_num, channel_num, kernel_size = 3, padding =1)
+            # self.conv3 = nn.Conv2d(2*channel_num, channel_num, kernel_size = 3, padding =1)
             self.seq_conv1 = torch.vmap(self.conv1)
             self.seq_conv2 = torch.vmap(self.conv2)
-            self.seq_conv3 = torch.vmap(self.conv3)
+            # self.seq_conv3 = torch.vmap(self.conv3)
             self.sigmoid = nn.Sigmoid()
         else: 
             pass
@@ -69,8 +69,8 @@ class VisionTransformer(nn.Module):
             x = self.seq_conv1(x)
             x = x.float()
             x = self.seq_conv2(x)
-            x = x.float()
-            x = self.seq_conv3(x)
+            # x = x.float()
+            # x = self.seq_conv3(x)
             x = self.sigmoid(x)
         else:
             pass

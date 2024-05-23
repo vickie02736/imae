@@ -1,0 +1,55 @@
+wandb_version: 1
+
+database:
+  desc: null
+  value: moving_mnist
+batch_size:
+  desc: null
+  value: 128
+epochs:
+  desc: null
+  value: 10
+_wandb:
+  desc: null
+  value:
+    python_version: 3.9.18
+    cli_version: 0.17.0
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1716136643
+    t:
+      1:
+      - 1
+      - 5
+      - 41
+      - 53
+      - 55
+      2:
+      - 1
+      - 5
+      - 41
+      - 53
+      - 55
+      3:
+      - 2
+      - 16
+      - 23
+      - 37
+      4: 3.9.18
+      5: 0.17.0
+      8:
+      - 5
+      13: linux-x86_64
+learning_rate:
+  desc: null
+  value: 0.003684934939115897
+num_layers:
+  desc: null
+  value: 6
+optimizer:
+  desc: null
+  value: 0
+patch_size:
+  desc: null
+  value: 8

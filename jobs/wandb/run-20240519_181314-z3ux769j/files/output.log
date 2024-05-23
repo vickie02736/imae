@@ -1,0 +1,19 @@
+Create sweep with ID: zfqj5rff
+Sweep URL: https://wandb.ai/vickie02736/imae_mm/sweeps/zfqj5rff
+Traceback (most recent call last):
+  File "/home/uceckz0/miniconda3/envs/imae/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 162, in __getattr__
+    return self.__getitem__(key)
+  File "/home/uceckz0/miniconda3/envs/imae/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 130, in __getitem__
+    return self._items[key]
+KeyError: 'patch_size'
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/lustre/home/uceckz0/Project/imae/jobs/../program/imae/main.py", line 164, in <module>
+    main()
+  File "/lustre/home/uceckz0/Project/imae/jobs/../program/imae/main.py", line 108, in main
+    score = objective(wandb.config)
+  File "/lustre/home/uceckz0/Project/imae/jobs/../program/imae/main.py", line 157, in objective
+    score = config.patch_size + config.num_layers+ config.optimizer+ config.learning_rate
+  File "/home/uceckz0/miniconda3/envs/imae/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 164, in __getattr__
+    raise AttributeError(
+AttributeError: <class 'wandb.sdk.wandb_config.Config'> object has no attribute 'patch_size'

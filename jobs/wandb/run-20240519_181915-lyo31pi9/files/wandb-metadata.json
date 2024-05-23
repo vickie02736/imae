@@ -1,0 +1,219 @@
+{
+    "os": "Linux-3.10.0-1127.el7.x86_64-x86_64-with-glibc2.17",
+    "python": "3.9.18",
+    "heartbeatAt": "2024-05-19T17:19:15.990728",
+    "startedAt": "2024-05-19T17:19:15.444402",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "<python with no main file>",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://github.com/vickie02736/imae.git/",
+        "commit": "7f69b3b102a9220018c6106fea6060463c516174"
+    },
+    "email": "vickie02736@gmail.com",
+    "root": "/lustre/home/uceckz0/Project/imae",
+    "host": "login12.myriad.ucl.ac.uk",
+    "username": "uceckz0",
+    "executable": "/home/uceckz0/miniconda3/envs/imae/bin/python",
+    "cpu_count": 36,
+    "cpu_count_logical": 36,
+    "cpu_freq": {
+        "current": 2264.8576944444444,
+        "min": 1000.0,
+        "max": 2300.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2299.859,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2299.859,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2299.859,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2299.298,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2296.911,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2292.138,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2285.119,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2240.899,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2272.766,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2256.903,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.421,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.28,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 1219.207,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2299.859,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.0,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2300.14,
+            "min": 1000.0,
+            "max": 2300.0
+        },
+        {
+            "current": 2299.719,
+            "min": 1000.0,
+            "max": 2300.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 9.717643737792969,
+            "used": 5.015594482421875
+        }
+    },
+    "memory": {
+        "total": 188.39830780029297
+    }
+}

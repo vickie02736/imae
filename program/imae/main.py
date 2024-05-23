@@ -15,10 +15,6 @@ from engine import Trainer, Evaluator
 from program.utils.tools import int_or_string
 
 
-# import wandb
-# wandb.login()
-
-
 SEED = 3409
 random.seed(SEED)
 np.random.seed(SEED)
@@ -66,13 +62,6 @@ def main():
         train_dataset = DataBuilder(data_config['train_file'], config['seq_length'], config['train']['rollout_times'], timestep=100)
         valid_dataset = DataBuilder(data_config['valid_file'], config['seq_length'], config['valid']['rollout_times'], timestep=100)
 
-        # if rank == 0: 
-        #     wandb.init(project="imae_sw", config ={
-        #         "database": args.database,
-        #         "batch_size": config['batch_size'],
-        #         "epochs": args.epochs,
-        #     })
-
     elif args.database == 'moving_mnist':
         # moving mnist
         config = yaml.load(open("../program/imae/config_mm.yaml", "r"), Loader=yaml.FullLoader)
@@ -81,12 +70,6 @@ def main():
         train_dataset = DataBuilder(config['seq_length'], config['train']['rollout_times'], 'train')
         valid_dataset = DataBuilder(config['seq_length'], config['valid']['rollout_times'], 'valid')
 
-        # if rank == 0: 
-        #     wandb.init(project="imae_mm", config ={
-        #         "database": args.database,
-        #         "batch_size": config['batch_size'],
-        #         "epochs": args.epochs,
-        #     })
     else:
         pass
 
@@ -123,8 +106,8 @@ def main():
         trainer.train_epoch(epoch)
         evalutor.evaluate_epoch(epoch)
 
-
-
 if __name__ == "__main__":
-    
     main()
+
+
+    
