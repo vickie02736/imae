@@ -10,6 +10,7 @@ import yaml
 
 
 config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
+# config = yaml.load(open("/home/uceckz0/Project/imae/database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
 
 
 # the dataset for prediction

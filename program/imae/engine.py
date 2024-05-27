@@ -1,6 +1,6 @@
 import os
 import copy
-# import wandb
+import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -17,10 +17,12 @@ class Engine:
         self.config = config
         self.dataset = dataset
         self.model = model
+        self.test_flag = test_flag
         self.world_size=torch.cuda.device_count()
         self.device = torch.device(f"cuda:{self.rank % torch.cuda.device_count()}")
         self.init_loss_function()
         self.init_dataloader()
+        self.setup()
         
 
     def setup(self):
@@ -28,7 +30,6 @@ class Engine:
         self.model = DDP(self.model, device_ids=[self.rank]) 
 
     def init_dataloader(self):
-        # Initialize dataloaders
         sampler = DistributedSampler(self.dataset, num_replicas=self.world_size, rank=self.rank)
         self.dataloader = DataLoader(self.dataset, batch_size=self.config['batch_size'], pin_memory=True,
                                      shuffle=False, drop_last=True, sampler=sampler)
@@ -71,9 +72,10 @@ class Engine:
 
 class Trainer(Engine):
 
-    def __init__(self, rank, config, dataset, model, epochs, test_flag):
+    def __init__(self, rank, config, dataset, model, epochs, resume_epoch, test_flag=False):
         super().__init__(rank, config, dataset, model, test_flag)
         self.epochs = epochs
+        self.resume_epoch = resume_epoch
         self.init_training_components() 
         self.train_losses = {}
         
@@ -118,7 +120,6 @@ class Trainer(Engine):
             loss_data = {'predict_loss': average_predict_loss, 'rollout_loss': average_rollout_loss}
             save_losses(epoch, loss_data, self.config['train']['save_loss'], 'train_losses.json')
             self.save_checkpoint()
-            # wandb.log(loss_data)
 
 
     def save_checkpoint(self):
@@ -131,14 +132,23 @@ class Trainer(Engine):
         torch.save(save_dict, save_path)
 
 
-    def load_checkpoint(self, resume_epoch):
-        checkpoint_path = self.config['train']['save_checkpoint'] + f'checkpoint_{resume_epoch-1}.pth'
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
-        self.model.load_state_dict(checkpoint['model'])
-        self.optimizer.load_state_dict(checkpoint['optimizer'])
-        self.scheduler.load_state_dict(checkpoint['scheduler'])
-        self.scaler.load_state_dict(checkpoint['scaler'])
-
+    def load_checkpoint(self):
+        if self.resume_epoch == 0:
+            torch.save(self.model.state_dict(), os.path.join(self.config['train']['save_checkpoint'], 'init.pth'))
+            losses = {}
+            os.makedirs(self.config['train']['save_loss'], exist_ok=True)
+            os.makedirs(self.config['valid']['save_loss'], exist_ok=True)
+            with open(os.path.join(self.config['train']['save_loss'], 'train_losses.json'), 'w') as file:
+                json.dump(losses, file)
+            with open(os.path.join(self.config['valid']['save_loss'], 'valid_losses.json'), 'w') as file:
+                json.dump(losses, file)
+        else:
+            checkpoint_path = self.config['train']['save_checkpoint'] + f'checkpoint_{self.resume_epoch-1}.pth'
+            checkpoint = torch.load(checkpoint_path, map_location=self.device)
+            self.model.load_state_dict(checkpoint['model'])
+            self.optimizer.load_state_dict(checkpoint['optimizer'])
+            self.scheduler.load_state_dict(checkpoint['scheduler'])
+            self.scaler.load_state_dict(checkpoint['scaler'])
 
     def init_training_components(self): 
 
@@ -220,4 +230,3 @@ class Evaluator(Engine):
                     average_loss = total_loss / len(self.dataloader.dataset)
                     chunk_losses[metric] = average_loss
             save_losses(epoch, chunk_losses, self.config['valid']['save_loss'], 'valid_losses.json')
-

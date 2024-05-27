@@ -80,25 +80,24 @@ def main():
     model = VisionTransformer(args.database, 
                               data_config['channels'], data_config['image_size'], config['patch_size'],
                               num_layers = config['model']['num_layers'], nhead = config['model']['nhead'])
-    torch.save(model.state_dict(), os.path.join(config['train']['save_checkpoint'], 'init.pth'))
+    # torch.save(model.state_dict(), os.path.join(config['train']['save_checkpoint'], 'init.pth'))
 
     trainer = Trainer(rank, config, train_dataset, model, args.epochs, args.resume_epoch)
     evalutor = Evaluator(rank, config, valid_dataset, model)
 
 
-    trainer.setup()
-    evalutor.setup()
-    if args.resume_epoch == 0: 
-        losses = {}
-        os.makedirs(config['train']['save_loss'], exist_ok=True)
-        os.makedirs(config['valid']['save_loss'], exist_ok=True)
-        with open(os.path.join(config['train']['save_loss'], 'train_losses.json'), 'w') as file:
-            json.dump(losses, file)
-        with open(os.path.join(config['valid']['save_loss'], 'valid_losses.json'), 'w') as file:
-            json.dump(losses, file)
-    else:
-
-        trainer.load_checkpoint(args.resume_epoch)
+    # trainer.setup()
+    # evalutor.setup()
+    # if args.resume_epoch == 0: 
+    #     losses = {}
+    #     os.makedirs(config['train']['save_loss'], exist_ok=True)
+    #     os.makedirs(config['valid']['save_loss'], exist_ok=True)
+    #     with open(os.path.join(config['train']['save_loss'], 'train_losses.json'), 'w') as file:
+    #         json.dump(losses, file)
+    #     with open(os.path.join(config['valid']['save_loss'], 'valid_losses.json'), 'w') as file:
+    #         json.dump(losses, file)
+    # else:
+    #     trainer.load_checkpoint(args.resume_epoch)
 
     end_epoch = args.resume_epoch + args.epochs
     
@@ -108,6 +107,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-    

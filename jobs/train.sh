@@ -12,7 +12,7 @@
 
 #$ -cwd
 
-# export OMP_NUM_THREADS=2
+# export OMP_NUM_THREADS=1
 
 # echo "This script is running on "
 # hostname
@@ -23,12 +23,10 @@
 source /home/uceckz0/miniconda3/bin/activate
 conda activate imae
 
-# wandb login --relogin 8c3ad30d1b4df3c419d42a87c1979b0eb404232e
-
 echo $(date +%d-%m-%Y_%H:%M:%S)
 torchrun --nnodes=1 --nproc_per_node=1 ../program/imae/main.py\
         --train True\
-        --epochs 10\
+        --epochs 2\
         --resume-epoch 0\
-        --database moving_mnist
+        --database shallow_water
 echo $(date +%d-%m-%Y_%H:%M:%S)
