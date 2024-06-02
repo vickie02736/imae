@@ -312,8 +312,6 @@ class ConvLSTM(nn.Module):
 
 
 
-
-
 class ConvAutoencoder(nn.Module):
 
     def __init__(self, latent_dim, input_channels=3):
@@ -322,7 +320,7 @@ class ConvAutoencoder(nn.Module):
         self.latent_dim = latent_dim
 
         #initialize encoder and decoder
-        self.encoder = nn.Sequential(
+        self.encode = nn.Sequential(
                     nn.Conv2d(input_channels, 64, kernel_size=3, stride=1, padding=1),
                     nn.BatchNorm2d(64),
                     nn.GELU(),
@@ -350,7 +348,7 @@ class ConvAutoencoder(nn.Module):
                     nn.BatchNorm2d(self.latent_dim),
                     nn.GELU()
                 )
-        self.decoder = nn.Sequential(  
+        self.decode = nn.Sequential(  
                     nn.ConvTranspose2d(self.latent_dim, 1024, kernel_size=4, stride=1, padding=0),  # Upscales to 4x4
                     nn.BatchNorm2d(1024),
                     nn.GELU(),
@@ -380,20 +378,30 @@ class ConvAutoencoder(nn.Module):
         self.bn = nn.BatchNorm2d(self.latent_dim, affine=False)
 
     def forward(self, x):
-        # latent_code.shape is [batch_size, n, 1, 1]
-
         latent_code = self.encoder(x)
-        latent_code = self.bn(latent_code)
         x_hat = self.decoder(latent_code)
 
-        return {'latent_code': latent_code,
-                'x_hat': x_hat}
+        return {'latent_code': latent_code, 'x_hat': x_hat}
+
+    def encoder(self, x):
+        x = self.encode(x)
+        x = self.bn(x)
+        x = x.reshape(x.shape[0], -1)
+        return x
+
+
+    def decoder(self, x):
+        x = x.unsqueeze(2).unsqueeze(3)
+        x = self.decode(x)
+        return x
 
 
 
 # model = ConvAutoencoder(latent_dim=64, input_channels=3)
 # x = torch.randn(2, 3, 128, 128)
-# y = model(x)
+# latent = model.encoder(x)
+# y = model.decoder(latent)
+# print(latent.shape, y.shape)
 # print(y['latent_code'].shape, y['x_hat'].shape)
 
 
@@ -412,17 +420,15 @@ class LSTMPredictor(nn.Module):
         self.linear = nn.Linear(hidden_size, hidden_size)
         
     def forward(self, x):
-        x = x.reshape(x.shape[0], x.shape[1], -1)
         batch_size, fragment_length, latent_dim_AE = x.shape
         out, _ = self.lstm(x) 
         out = out[:, -1, :]
         out = self.linear(out)
         # out: (batch_size, latent_dim_AE, hidden_size)
-        out = out.reshape(batch_size, fragment_length, latent_dim_AE).unsqueeze(3).unsqueeze(4)
-
+        out = out.reshape(batch_size, fragment_length, latent_dim_AE)
         return out
 
-# x = torch.randn(2, 10, 64, 1, 1)
+# x = torch.randn(2, 10, 64)
 # model = LSTMPredictor(input_size=64, hidden_size=640)
 # y = model(x)
 # print(y.shape)
