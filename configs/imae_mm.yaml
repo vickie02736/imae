@@ -6,6 +6,7 @@ batch_size: 128
 patch_size: 8
 seq_length: 5
 mask_method: "random"
+save_loss: '/home/uceckz0/Project/imae/data/moving_mnist/imae/loss/'
 
 model: 
   num_layers: 5
@@ -14,10 +15,11 @@ model:
 train:
   loss_fn: "BCE"
   optimizer: "RMSprop"
-  learning_rate: 0.001
+  scheduler: "StepLR"
+  learning_rate: 0.0001
   rollout_times: 2
-  save_checkpoint: '../data/moving_mnist/ckpt/'
-  save_loss: '../data/moving_mnist/loss/'
+  save_checkpoint: '../data/moving_mnist/imae/ckpt/'
+  
 
 
 valid: 
@@ -29,8 +31,7 @@ valid:
     - "MAE" 
     - "SSIM" 
     - "PSNR"
-  save_reconstruct: '../data/moving_mnist/rec/'
-  save_loss: '../data/moving_mnist/loss/'
+  save_reconstruct: '../data/moving_mnist/imae/rec/'
   
 test:
   dataset: 
@@ -45,5 +46,3 @@ test:
     - "MAE" 
     - "SSIM" 
     - "PSNR"
-  
-

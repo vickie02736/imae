@@ -7,7 +7,7 @@ import sys
 sys.path.append("..")
 
 
-class DataBuilder(Dataset): 
+class seq_DataBuilder(Dataset): 
 
     def __init__(self, input_length, rollout_times, dataset, train_ratio=0.8, transform=None):
 

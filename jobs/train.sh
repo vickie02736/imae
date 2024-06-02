@@ -26,7 +26,7 @@ conda activate imae
 echo $(date +%d-%m-%Y_%H:%M:%S)
 torchrun --nnodes=1 --nproc_per_node=1 ../program/imae/main.py\
         --train True\
-        --epochs 2\
+        --epochs 10\
         --resume-epoch 0\
-        --database shallow_water
+        --database moving_mnist
 echo $(date +%d-%m-%Y_%H:%M:%S)

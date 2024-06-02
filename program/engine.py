@@ -77,6 +77,7 @@ class Trainer(Engine):
         self.epochs = epochs
         self.resume_epoch = resume_epoch
         self.init_training_components() 
+        self.load_checkpoint()
         self.train_losses = {}
         
 
@@ -118,7 +119,7 @@ class Trainer(Engine):
             average_rollout_loss = total_rollout_loss / len(self.dataloader.dataset)
 
             loss_data = {'predict_loss': average_predict_loss, 'rollout_loss': average_rollout_loss}
-            save_losses(epoch, loss_data, self.config['train']['save_loss'], 'train_losses.json')
+            save_losses(epoch, loss_data, self.config['save_loss'], 'train_losses.json')
             self.save_checkpoint()
 
 
@@ -133,14 +134,16 @@ class Trainer(Engine):
 
 
     def load_checkpoint(self):
+        os.makedirs(self.config['train']['save_checkpoint'], exist_ok=True)
+        os.makedirs(self.config['valid']['save_reconstruct'], exist_ok=True)
+        os.makedirs(self.config['save_loss'], exist_ok=True)
+        # os.makedirs('/home/uceckz0/Project/imae/data/moving_mnist/imae/loss/', exist_ok=True) 
         if self.resume_epoch == 0:
             torch.save(self.model.state_dict(), os.path.join(self.config['train']['save_checkpoint'], 'init.pth'))
             losses = {}
-            os.makedirs(self.config['train']['save_loss'], exist_ok=True)
-            os.makedirs(self.config['valid']['save_loss'], exist_ok=True)
-            with open(os.path.join(self.config['train']['save_loss'], 'train_losses.json'), 'w') as file:
+            with open(os.path.join(self.config['save_loss'], 'train_losses.json'), 'w') as file:
                 json.dump(losses, file)
-            with open(os.path.join(self.config['valid']['save_loss'], 'valid_losses.json'), 'w') as file:
+            with open(os.path.join(self.config['save_loss'], 'valid_losses.json'), 'w') as file:
                 json.dump(losses, file)
         else:
             checkpoint_path = self.config['train']['save_checkpoint'] + f'checkpoint_{self.resume_epoch-1}.pth'
@@ -151,22 +154,24 @@ class Trainer(Engine):
             self.scaler.load_state_dict(checkpoint['scaler'])
 
     def init_training_components(self): 
-
-        # Set up loss function, optimizer, scheduler
-        T_start = self.epochs * 0.05 * self.len_dataset // self.config['batch_size']
-        T_start = int(T_start)
         if self.config['train']['optimizer'] == 'AdamW':
             self.optimizer = optim.AdamW(self.model.parameters(), lr=self.config['train']['learning_rate'], betas=(0.9, 0.95), weight_decay=0.03)
         elif self.config['train']['optimizer'] == 'RMSprop':
             self.optimizer = optim.RMSprop(self.model.parameters(), lr=self.config['train']['learning_rate'], alpha=0.9)
+        elif self.config['train']['optimizer'] == 'Adam':
+            self.optimizer = optim.Adam(model.parameters(), lr==self.config['train']['learning_rate'])
         else:
             pass
-        self.scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, T_start, eta_min=1e-6, last_epoch=-1)
+        if self.config['train']['scheduler'] == 'CosineAnnealingWarmRestarts':
+            T_start = self.epochs * 0.05 * self.len_dataset // self.config['batch_size']
+            T_start = int(T_start)
+            self.scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, T_start, eta_min=1e-6, last_epoch=-1)
+        elif self.config['train']['scheduler'] == 'StepLR':
+            self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.1)
         self.scaler = torch.cuda.amp.GradScaler()
 
 
     def init_loss_function(self):
-        # Set up loss function
         if self.config['train']['loss_fn'] == 'MSE':
             self.loss_fn = nn.MSELoss()
         elif self.config['train']['loss_fn'] == 'L1':
@@ -229,4 +234,4 @@ class Evaluator(Engine):
                     total_loss = sum(running_loss_list)
                     average_loss = total_loss / len(self.dataloader.dataset)
                     chunk_losses[metric] = average_loss
-            save_losses(epoch, chunk_losses, self.config['valid']['save_loss'], 'valid_losses.json')
+            save_losses(epoch, chunk_losses, self.config['save_loss'], 'valid_losses.json')

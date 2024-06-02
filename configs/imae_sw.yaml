@@ -1,23 +1,34 @@
 database: shallow_water
-image_size: 64
+image_size: 128
 channels: 3
 
 batch_size: 25 #A100 128
 patch_size: 16
 seq_length: 10
 mask_method: "zeros"
+save_loss: '../data/shallow_water/imae/loss/'
 
-model: 
+imae: 
   num_layers: 6
   nhead: 6
+
+convlstm:
+  hidden_dim: [64, 64, 128]
+  kernel_size: [3, 3]
+  num_layers: 3
+
+caelstm:
+  cae_hidden_dim: 256
+  lstm_hidden_dim: 256
 
 train:
   loss_fn: "MSE"
   optimizer: "AdamW"
+  scheduler: "CosineAnnealingLR"
   learning_rate: 0.0001
   rollout_times: 2
-  save_checkpoint: '../data/shallow_water/ckpt/'
-  save_loss: '../data/shallow_water/loss/'
+  save_checkpoint: '../data/shallow_water/imae/ckpt/'
+  
 
 
 valid: 
@@ -28,8 +39,7 @@ valid:
     - "MAE" 
     - "SSIM" 
     - "PSNR"
-  save_reconstruct: '../data/shallow_water/rec/'
-  save_loss: '../data/shallow_water/loss/'
+  save_reconstruct: '../data/shallow_water/imae/rec/'
   
 test:
   dataset: 
@@ -44,7 +54,3 @@ test:
     - "MAE" 
     - "SSIM" 
     - "PSNR"
-  
-  
-
-

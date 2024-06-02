@@ -67,4 +67,4 @@ def mask(x, mask_mtd = "zeros", test_flag=False, mask_ratio=None):
         masked_tensor = torch.rand(x.shape[2], x.shape[3], x.shape[4]).to(x.device)
     batch_indices = torch.arange(x.shape[0], device=x.device).unsqueeze(1).expand(-1, num_mask)
     x[batch_indices, idx] = masked_tensor
-    return x
+    return x, idx

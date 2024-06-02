@@ -6,15 +6,12 @@ import torch
 import sys
 sys.path.append("..")
 import yaml
-
-
-
 config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
-# config = yaml.load(open("/home/uceckz0/Project/imae/database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
 
 
-# the dataset for prediction
-class DataBuilder(Dataset): 
+
+
+class seq_DataBuilder(Dataset): 
 
     def __init__(self, dataset, clip_length, rollout_times, timestep, transform=None):
 
@@ -95,3 +92,58 @@ class DataBuilder(Dataset):
         for c in range(arr.shape[1]):
             normalized_arr[:, c, :, :] = 2 * ((arr[:, c, :, :] - mins[c]) / (maxs[c] - mins[c])) - 1
         return normalized_arr
+
+
+
+class fra_DataBuilder(Dataset): 
+
+    def __init__(self, dataset, timestep, transform=None):
+
+        '''
+        dataset_path: config['train_file'], config['valid_file'], config['inner_test_file'], config['outer_test_file']
+        '''
+        df = pd.read_csv(f"../database/shallow_water/dataset_split/{timestep}timestep.csv")
+        
+        self.all_imgs = df[df["Key"].isin(dataset)]
+
+    def __len__(self):
+        return len(self.all_imgs)
+    
+    
+    def __getitem__(self, idx):
+        img = self.all_imgs.iloc[idx]
+        param_R = torch.tensor(img["R"], dtype=torch.float32)
+        param_Hp = torch.tensor(img["Hp"], dtype=torch.float32)
+        param_Pos = torch.tensor(img["Pos"], dtype=torch.float32)
+        print(param_Pos)
+        param_Label = img["Label"]
+        image_address = img["Address"] # the images in the same clip should have the same address
+        all_img = np.load(image_address, allow_pickle=True, mmap_mode='r')
+        img = all_img[int(param_Pos)]
+
+        mins = config['min']
+        maxs = config['max']
+        
+        normalized_img = self.normalize(img, mins, maxs)
+    
+        return {"R": param_R, "Hp": param_Hp, "Pos": param_Pos, "Label": param_Label, 
+                "Frame": normalized_img}
+    
+    
+    def normalize(self, img, mins, maxs): 
+        normalized_img = np.empty_like(img, dtype=np.float32)
+        for c in range(img.shape[0]):
+            normalized_img[c, :, :] = 2 * ((img[c, :, :] - mins[c]) / (maxs[c] - mins[c])) - 1
+        return normalized_img
+
+
+
+# file = config['train_file']
+# dataset = img_DataBuilder(file, timestep=100)
+
+# from torch.utils.data import DataLoader
+# dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
+
+# for i, data in enumerate(dataloader):
+#     print(data["Frame"].shape)
+#     break
