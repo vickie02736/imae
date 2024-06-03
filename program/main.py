@@ -10,8 +10,6 @@ import numpy as np
 from tqdm import tqdm
 import torch
 import torch.distributed as dist
-
-# from engine import Trainer, Evaluator
 from program.utils.tools import int_or_string
 
 SEED = 3409
@@ -84,7 +82,6 @@ def main():
 
     # load database
     if args.database == 'shallow_water':
-        # shallow water
         config = yaml.load(open("../configs/sw_train_config.yaml", "r"),
                            Loader=yaml.FullLoader)
         data_config = yaml.load(open("../database/shallow_water/config.yaml",
@@ -101,7 +98,6 @@ def main():
                                         timestep=100)
 
     elif args.database == 'moving_mnist':
-        # moving mnist
         config = yaml.load(open("../configs/mm_train_config.yaml", "r"),
                            Loader=yaml.FullLoader)
         data_config = yaml.load(open("../database/moving_mnist/config.yaml",
@@ -119,8 +115,7 @@ def main():
         pass
 
     if args.model_name == 'imae':
-        from model import VisionTransformer
-        # from engine import ImaeEngine
+        from models import VisionTransformer
         from engines import ImaeTrainer
         os.makedirs(config['imae']['save_checkpoint'], exist_ok=True)
         os.makedirs(config['imae']['save_reconstruct'], exist_ok=True)
@@ -141,7 +136,7 @@ def main():
             engine.evaluate_epoch(epoch)
 
     elif args.model_name == 'convlstm':
-        from model import ConvLSTM
+        from models import ConvLSTM
         from engines import ConvLstmTrainer
         os.makedirs(os.path.join(config['convlstm']['save_checkpoint'],
                                  args.interpolation),
