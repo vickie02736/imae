@@ -25,11 +25,14 @@ def linear_interpolation(batch_frames, known_mask_idx):
     return interpolated_frames
 
 
+
 def gaussian_kernel1d(size, sigma):
     coords = torch.arange(size).float() - (size - 1) / 2
     g = torch.exp(-coords**2 / (2 * sigma**2))
     g /= g.sum()
     return g
+
+
 
 def gaussian_interpolation(batch_frames, known_mask_idx, sigma=1.0):
     batch_size, seq_len, channels, height, width = batch_frames.shape
@@ -63,6 +66,6 @@ def gaussian_interpolation(batch_frames, known_mask_idx, sigma=1.0):
 # x = torch.rand(2, 10, 3, 128, 128)
 # from tools import mask
 # x, idx = mask(x)
-# # interpolated_frames = linear_interpolation(x, idx)
-# interpolated_frames = gaussian_interpolation(x, idx)
+# interpolated_frames = linear_interpolation(x, idx)
+# # interpolated_frames = gaussian_interpolation(x, idx)
 # print(interpolated_frames.shape)

@@ -2,7 +2,7 @@ database: shallow_water
 image_size: 128
 channels: 3
 
-batch_size: 25 #A100 128
+batch_size: 32 #A100 128
 patch_size: 16
 seq_length: 10
 mask_method: "zeros"
@@ -17,10 +17,12 @@ imae:
 
 
 convlstm:
-  hidden_dim: [64, 64, 128]
+  hidden_dim: [32, 32]
   kernel_size: [3, 3]
-  num_layers: 3
-
+  num_layers: 2
+  save_loss: '../data/shallow_water/convlstm/loss/'
+  save_checkpoint: '../data/shallow_water/convlstm/ckpt/'
+  save_reconstruct: '../data/shallow_water/convlstm/rec/'
 
 caelstm:
   cae_hidden_dim: 128

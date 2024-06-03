@@ -24,9 +24,9 @@ source /home/uceckz0/miniconda3/bin/activate
 conda activate imae
 
 echo $(date +%d-%m-%Y_%H:%M:%S)
-torchrun --nnodes=1 --nproc_per_node=1 ../program/imae/main.py\
-        --train True\
-        --epochs 10\
+torchrun --nnodes=1 --nproc_per_node=1 ../program/main.py\
+        --epochs 2\
         --resume-epoch 0\
-        --database moving_mnist
+        --database shallow_water\
+        --model-name imae
 echo $(date +%d-%m-%Y_%H:%M:%S)
