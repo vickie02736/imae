@@ -80,6 +80,8 @@ def main():
     torch.cuda.empty_cache()
     rank = dist.get_rank()
 
+    end_epoch = args.resume_epoch + args.epochs
+
     # load database
     if args.database == 'shallow_water':
         config = yaml.load(open("../configs/sw_train_config.yaml", "r"),
@@ -132,7 +134,6 @@ def main():
                                   nhead=config['imae']['nhead'])
         engine = ImaeTrainer(rank, config, train_dataset, valid_dataset, model,
                              args.epochs, args.resume_epoch)
-        end_epoch = args.resume_epoch + args.epochs
         for epoch in tqdm(range(args.resume_epoch, end_epoch),
                           desc="Epoch progress"):
             engine.train_epoch(epoch)
@@ -156,7 +157,6 @@ def main():
         engine = ConvLstmTrainer(rank, config, train_dataset, valid_dataset,
                                  model, args.epochs, args.resume_epoch,
                                  args.interpolation)
-        end_epoch = args.resume_epoch + args.epochs
         for epoch in tqdm(range(args.resume_epoch, end_epoch),
                           desc="Epoch progress"):
             engine.train_epoch(epoch)
@@ -168,11 +168,28 @@ def main():
         os.makedirs(config['cae']['save_checkpoint'], exist_ok=True)
         os.makedirs(config['cae']['save_reconstruct'], exist_ok=True)
         os.makedirs(config['cae']['save_loss'], exist_ok=True)
-        model = ConvAutoencoder(config['cae']['latent_dim'],
-                                config['channels'])
+        model = ConvAutoencoder(config['cae']['latent_dim'], config['channels'])
         engine = CaeTrainer(rank, config, train_dataset, valid_dataset, model,
                             args.epochs, args.resume_epoch)
-        end_epoch = args.resume_epoch + args.epochs
+        for epoch in tqdm(range(args.resume_epoch, end_epoch),
+                          desc="Epoch progress"):
+            engine.train_epoch(epoch)
+            engine.evaluate_epoch(epoch)
+
+    elif args.model_name == 'cae_lstm':
+        from models import ConvAutoencoder, LSTMPredictor
+        from engines import CaeLstmTrainer
+        os.makedirs(config['cae_lstm']['save_checkpoint'], exist_ok=True)
+        os.makedirs(config['cae_lstm']['save_reconstruct'], exist_ok=True)
+        os.makedirs(config['cae_lstm']['save_loss'], exist_ok=True)
+        cae_model = ConvAutoencoder(config['cae']['latent_dim'],
+                                    config['channels'])
+        model = LSTMPredictor(cae_model, config['cae']['latent_dim'],
+                              config['cae_lstm']['hidden_dim'])
+        engine = CaeLstmTrainer(rank, config, train_dataset, valid_dataset,
+                                model, cae_model, args.epochs,
+                                args.resume_epoch, args.interpolation)
+        engine.load_cae(epoch=0)
         for epoch in tqdm(range(args.resume_epoch, end_epoch),
                           desc="Epoch progress"):
             engine.train_epoch(epoch)

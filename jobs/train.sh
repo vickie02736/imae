@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
-#$ -N cae
-#$ -l h_rt=72:00:0
+#$ -N cae_sw
+#$ -l h_rt=12:00:0
 #$ -l mem=10G
 #$ -l gpu=1
 #$ -ac allow=EFL
@@ -14,11 +14,11 @@
 
 # export OMP_NUM_THREADS=1
 
-# echo "This script is running on "
-# hostname
+echo "This script is running on "
+hostname
 
-# echo "GPU information" 
-# nvidia-smi
+echo "GPU information" 
+nvidia-smi
 
 source /home/uceckz0/miniconda3/bin/activate
 conda activate imae

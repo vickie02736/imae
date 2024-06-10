@@ -71,9 +71,9 @@ class ConvLstmTrainer(Trainer, Evaluator):
 
         if self.rank == 0:
             average_predict_loss = total_predict_loss / len(
-                self.dataloader.dataset)
+                self.train_loader.dataset)
             average_rollout_loss = total_rollout_loss / len(
-                self.dataloader.dataset)
+                self.train_loader.dataset)
 
             loss_data = {
                 'predict_loss': average_predict_loss,
@@ -108,10 +108,9 @@ class ConvLstmTrainer(Trainer, Evaluator):
                 for j, chunk in enumerate(target_chunks):
                     if j == 0:
                         output = self.model(origin)
-                        output_chunks.append(output)
                     else:
                         output = self.model(output)
-                        output_chunks.append(output)
+                    output_chunks.append(output)
 
                 if i == 1:
                     save_path = os.path.join(
@@ -129,7 +128,7 @@ class ConvLstmTrainer(Trainer, Evaluator):
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():
                 total_loss = sum(running_loss_list)
-                average_loss = total_loss / len(self.dataloader.dataset)
+                average_loss = total_loss / len(self.valid_loader.dataset)
                 chunk_losses[metric] = average_loss
             save_losses(
                 epoch, chunk_losses,

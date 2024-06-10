@@ -31,8 +31,7 @@ cae:
   save_reconstruct: '../data/shallow_water/cae/rec/'
 
 caelstm: 
-  cae_hidden_dim: 128
-  lstm_hidden_dim: 128
+  hidden_dim: 1280
   save_loss: '../data/shallow_water/caelstm/loss/'
   save_checkpoint: '../data/shallow_water/caelstm/ckpt/'
   save_reconstruct: '../data/shallow_water/caelstm/rec/'

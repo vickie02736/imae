@@ -31,7 +31,6 @@ class CaeTrainer(Trainer, Evaluator):
         total_loss = 0.0
 
         for i, sample in enumerate(self.train_loader):
-            print(sample.keys())
             origin = sample["Frame"].float().to(self.device)
             target = sample["Frame"].float().to(self.device)
 
@@ -51,7 +50,7 @@ class CaeTrainer(Trainer, Evaluator):
 
         if self.rank == 0:
             average_loss = total_loss / len(
-                self.dataloader.dataset)
+                self.train_loader.dataset)
 
             loss_data = {
                 'cae_loss': average_loss,
@@ -73,12 +72,11 @@ class CaeTrainer(Trainer, Evaluator):
                 origin_plot = copy.deepcopy(sample["Input"])
                 origin = sample["Input"].float().to(self.device)
                 target = sample["Input"].float().to(self.device)
-                output = self.model(origin, sequence_input=True)
+                output = self.model(origin, sequence_input=True)['x_hat']
 
                 if i == 1:
                     save_path = os.path.join(
-                        self.config['cae']['save_reconstruct'],
-                        self.interpolation)
+                        self.config['cae']['save_reconstruct'])
                     self.plot(origin_plot, output, target, 
                               self.config['seq_length'], epoch, save_path)
 
@@ -90,7 +88,7 @@ class CaeTrainer(Trainer, Evaluator):
                 chunk_losses = {}
                 for metric, running_loss_list in self.running_losses.items():
                     total_loss = sum(running_loss_list)
-                    average_loss = total_loss / len(self.dataloader.dataset)
+                    average_loss = total_loss / len(self.valid_loader.dataset)
                     chunk_losses[metric] = average_loss
                 save_losses(
                     epoch, chunk_losses,
@@ -111,8 +109,7 @@ class CaeTrainer(Trainer, Evaluator):
                 json.dump(losses, file)
         else:
             checkpoint_path = os.path.join(
-                self.config['cae']['save_checkpoint'], self.interpolation,
-                f'checkpoint_{self.resume_epoch-1}.pth')
+                self.config['cae']['save_checkpoint'], f'checkpoint_{self.resume_epoch-1}.pth')
             checkpoint = torch.load(checkpoint_path, map_location=self.device)
             self.model.load_state_dict(checkpoint['model'])
             self.optimizer.load_state_dict(checkpoint['optimizer'])
@@ -166,7 +163,8 @@ class CaeLstmTrainer(Trainer, Evaluator):
                  config,
                  train_dataset,
                  valid_dataset,
-                 model,
+                 model, 
+                 cae_model,
                  epochs,
                  resume_epoch,
                  interpolation,
@@ -174,7 +172,7 @@ class CaeLstmTrainer(Trainer, Evaluator):
         Trainer.__init__(self, rank, config, train_dataset, model, epochs,
                          resume_epoch)
         Evaluator.__init__(self, rank, config, valid_dataset, model, test_flag)
-
+        self.cae_model = cae_model
         self.interpolation = interpolation
         if self.interpolation == "linear":
             from program.utils.interpolation import linear_interpolation as interpolation_fn
@@ -195,7 +193,9 @@ class CaeLstmTrainer(Trainer, Evaluator):
                                mask_mtd=self.config["mask_method"])
             origin = self.interpolation_fn(origin, idx)
             origin = origin.float().to(self.device)
+            origin = cae_model.encoder(x)
             target = sample["Target"].float().to(self.device)
+            target = cae_model.encoder(target)
             target_chunks = torch.chunk(target,
                                         self.config['train']['rollout_times'],
                                         dim=1)
@@ -221,9 +221,9 @@ class CaeLstmTrainer(Trainer, Evaluator):
 
         if self.rank == 0:
             average_predict_loss = total_predict_loss / len(
-                self.dataloader.dataset)
+                self.train_loader.dataset)
             average_rollout_loss = total_rollout_loss / len(
-                self.dataloader.dataset)
+                self.train_loader.dataset)
 
             loss_data = {
                 'predict_loss': average_predict_loss,
@@ -251,18 +251,24 @@ class CaeLstmTrainer(Trainer, Evaluator):
                 origin = self.interpolation_fn(masked_origin, idx)
                 interpolated_plot = copy.deepcopy(origin)
                 origin = origin.float().to(self.device)
+                latent_origin = cae_model.encoder(x)
+
                 target = sample["Target"].float().to(self.device)
+                latent_target = cae_model.encoder(target)
+                
                 target_chunks = torch.chunk(target, self.rollout_times, dim=1)
+                latent_target_chunks = torch.chunk(latent_target, self.rollout_times, dim=1)
 
                 output_chunks = []
+                latent_output_chunks = []
                 for j, chunk in enumerate(target_chunks):
                     if j == 0:
-                        output = self.model(origin)
-                        output_chunks.append(output)
+                        latent_output = self.model(latent_origin)
                     else:
-                        output = self.model(output)
-                        output_chunks.append(output)
-
+                        latent_output = self.model(latent_output)
+                    output_chunks.append(latent_output)
+                    output = cae_model.decoder(latent_output)
+                    output_chunks.append(output)
                 if i == 1:
                     save_path = os.path.join(
                         self.config['convlstm']['save_reconstruct'],
@@ -279,12 +285,19 @@ class CaeLstmTrainer(Trainer, Evaluator):
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():
                 total_loss = sum(running_loss_list)
-                average_loss = total_loss / len(self.dataloader.dataset)
+                average_loss = total_loss / len(self.valid_loader.dataset)
                 chunk_losses[metric] = average_loss
             save_losses(
                 epoch, chunk_losses,
                 os.path.join(self.config['convlstm']['save_loss'],
                              self.interpolation, 'valid_losses.json'))
+
+    def load_cae(self, epoch):
+        checkpoint_path = os.path.join(
+            self.config['cae']['save_checkpoint'], f'checkpoint_{epoch}.pth')
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        self.cae_model.load_state_dict(checkpoint['model'])
+        self.cae_model.eval()
 
     def load_checkpoint(self):
         if self.resume_epoch == 0:
