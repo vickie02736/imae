@@ -1,8 +1,0 @@
-Create sweep with ID: dk9z4o8o
-Sweep URL: https://wandb.ai/vickie02736/imae_mm/sweeps/dk9z4o8o
-Traceback (most recent call last):
-  File "/lustre/home/uceckz0/Project/imae/jobs/../program/imae/main.py", line 164, in <module>
-    main()
-  File "/lustre/home/uceckz0/Project/imae/jobs/../program/imae/main.py", line 108, in main
-    score = objective(wandb.sweep_config)
-AttributeError: module 'wandb' has no attribute 'sweep_config'

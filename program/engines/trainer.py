@@ -11,6 +11,7 @@ class Trainer(Engine):
         self.epochs = epochs
         self.resume_epoch = resume_epoch
         self.init_loss_function()
+        self.train_loader = self.init_dataloader()
         self.init_training_components()
         self.train_losses = {}
 
@@ -38,8 +39,8 @@ class Trainer(Engine):
                 alpha=0.9)
         elif self.config['train']['optimizer'] == 'Adam':
             self.optimizer = optim.Adam(
-                model.parameters(),
-                lr == self.config['train']['learning_rate'])
+                self.model.parameters(),
+                lr=self.config['train']['learning_rate'])
         else:
             pass
         if self.config['train']['scheduler'] == 'CosineAnnealingLR':

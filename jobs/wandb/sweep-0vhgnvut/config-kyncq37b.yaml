@@ -1,8 +1,0 @@
-wandb_version: 1
-
-learning_rate:
-  value: 0.002238381017360336
-num_layers:
-  value: 7
-patch_size:
-  value: 8

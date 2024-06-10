@@ -128,10 +128,8 @@ class fra_DataBuilder(Dataset):
         param_R = torch.tensor(img["R"], dtype=torch.float32)
         param_Hp = torch.tensor(img["Hp"], dtype=torch.float32)
         param_Pos = torch.tensor(img["Pos"], dtype=torch.float32)
-        print(param_Pos)
         param_Label = img["Label"]
-        image_address = img[
-            "Address"]  # the images in the same clip should have the same address
+        image_address = img["Address"]
         all_img = np.load(image_address, allow_pickle=True, mmap_mode='r')
         img = all_img[int(param_Pos)]
 

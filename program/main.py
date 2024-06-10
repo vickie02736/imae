@@ -87,16 +87,20 @@ def main():
         data_config = yaml.load(open("../database/shallow_water/config.yaml",
                                      "r"),
                                 Loader=yaml.FullLoader)
-        from database.shallow_water.dataset import seq_DataBuilder
-        train_dataset = seq_DataBuilder(data_config['train_file'],
-                                        config['seq_length'],
-                                        config['train']['rollout_times'],
-                                        timestep=100)
+        from database.shallow_water.dataset import seq_DataBuilder, fra_DataBuilder
         valid_dataset = seq_DataBuilder(data_config['valid_file'],
                                         config['seq_length'],
                                         config['valid']['rollout_times'],
                                         timestep=100)
-
+        if args.model_name == 'cae':
+            print(args.model_name)
+            train_dataset = fra_DataBuilder(data_config['train_file'],
+                                            timestep=100)
+        else:
+            train_dataset = seq_DataBuilder(data_config['train_file'],
+                                            config['seq_length'],
+                                            config['train']['rollout_times'],
+                                            timestep=100)
     elif args.database == 'moving_mnist':
         config = yaml.load(open("../configs/mm_train_config.yaml", "r"),
                            Loader=yaml.FullLoader)
@@ -110,7 +114,6 @@ def main():
         valid_dataset = seq_DataBuilder(config['seq_length'],
                                         config['valid']['rollout_times'],
                                         'valid')
-
     else:
         pass
 
@@ -153,6 +156,22 @@ def main():
         engine = ConvLstmTrainer(rank, config, train_dataset, valid_dataset,
                                  model, args.epochs, args.resume_epoch,
                                  args.interpolation)
+        end_epoch = args.resume_epoch + args.epochs
+        for epoch in tqdm(range(args.resume_epoch, end_epoch),
+                          desc="Epoch progress"):
+            engine.train_epoch(epoch)
+            engine.evaluate_epoch(epoch)
+
+    elif args.model_name == 'cae':
+        from models import ConvAutoencoder
+        from engines import CaeTrainer
+        os.makedirs(config['cae']['save_checkpoint'], exist_ok=True)
+        os.makedirs(config['cae']['save_reconstruct'], exist_ok=True)
+        os.makedirs(config['cae']['save_loss'], exist_ok=True)
+        model = ConvAutoencoder(config['cae']['latent_dim'],
+                                config['channels'])
+        engine = CaeTrainer(rank, config, train_dataset, valid_dataset, model,
+                            args.epochs, args.resume_epoch)
         end_epoch = args.resume_epoch + args.epochs
         for epoch in tqdm(range(args.resume_epoch, end_epoch),
                           desc="Epoch progress"):

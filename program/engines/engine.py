@@ -15,7 +15,6 @@ class Engine:
         self.world_size = torch.cuda.device_count()
         self.device = torch.device(
             f"cuda:{self.rank % torch.cuda.device_count()}")
-        self.init_dataloader()
         self.setup()
 
     def setup(self):
@@ -26,10 +25,11 @@ class Engine:
         sampler = DistributedSampler(self.dataset,
                                      num_replicas=self.world_size,
                                      rank=self.rank)
-        self.dataloader = DataLoader(self.dataset,
-                                     batch_size=self.config['batch_size'],
-                                     pin_memory=True,
-                                     shuffle=False,
-                                     drop_last=True,
-                                     sampler=sampler)
+        dataloader = DataLoader(self.dataset,
+                                batch_size=self.config['batch_size'],
+                                pin_memory=True,
+                                shuffle=False,
+                                drop_last=True,
+                                sampler=sampler)
         self.len_dataset = len(self.dataset)
+        return dataloader

@@ -31,7 +31,7 @@ class ImaeTrainer(Trainer, Evaluator):
         total_predict_loss = 0.0
         total_rollout_loss = 0.0
 
-        for i, sample in enumerate(self.dataloader):
+        for _, sample in enumerate(self.train_loader):
             origin, _ = mask(sample["Input"],
                              mask_mtd=self.config["mask_method"])
             origin = origin.float().to(self.device)
@@ -73,16 +73,17 @@ class ImaeTrainer(Trainer, Evaluator):
                 epoch, loss_data,
                 os.path.join(self.config['imae']['save_loss'],
                              'train_losses.json'))
-            self.save_checkpoint(
-                epoch,
-                os.path.join(self.config['imae']['save_checkpoint'],
-                             f'checkpoint_{epoch}.pth'))
+            if epoch %20 == 0:
+                self.save_checkpoint(
+                    epoch,
+                    os.path.join(self.config['imae']['save_checkpoint'],
+                                f'checkpoint_{epoch}.pth'))
 
     def evaluate_epoch(self, epoch):
         self.model.eval()
         with torch.no_grad():
 
-            for i, sample in enumerate(self.dataloader):
+            for i, sample in enumerate(self.valid_loader):
                 origin_before_masked = copy.deepcopy(sample["Input"])
                 origin, _ = mask(sample["Input"],
                                  mask_mtd=self.config["mask_method"])
@@ -150,55 +151,52 @@ class ImaeTrainer(Trainer, Evaluator):
     def plot(self, idx, origin, masked_origin, output_chunks, target_chunks,
              rollout_times, seq_len, save_path):
         _, ax = plt.subplots(rollout_times * 2 + 2,
-                             seq_len,
-                             figsize=(seq_len * 2+5, rollout_times * 4 + 2))
+                             seq_len + 1,
+                             figsize=(seq_len * 2 + 2, rollout_times * 4 + 4))
         row_titles = [
             "Original input", "Masked input", "Direct prediction", "Target",
             "Rollout prediction", "Target"
         ]
         for i, title in enumerate(row_titles):
-            ax[i][0].text(0.5,
-                          0.5,
-                          title,
-                        #   rotation=90,
-                          verticalalignment='center',
-                          horizontalalignment='center',
-                          fontsize=12)
+            ax[i][0].text(
+                1.0,
+                0.5,
+                title,
+                verticalalignment='center',
+                horizontalalignment='right',
+                fontsize=12)
             ax[i][0].axis('off')
         for j in range(seq_len):
             # visualise input
-            ax[0][j].imshow(origin[0][j][0].cpu().detach().numpy())
-            ax[0][j].set_xticks([])
-            ax[0][j].set_yticks([])
-            ax[0][j].set_title("Timestep {timestep}".format(timestep=j + 1),
-                               fontsize=10)
+            ax[0][j + 1].imshow(origin[0][j][0].cpu().detach().numpy())
+            ax[0][j + 1].set_xticks([])
+            ax[0][j + 1].set_yticks([])
+            ax[0][j + 1].set_title("Timestep {timestep}".format(timestep=j + 1),
+                                   fontsize=10)
             # visualise masked input
-            ax[1][j].imshow(masked_origin[0][j][0].cpu().detach().numpy())
-            ax[1][j].set_xticks([])
-            ax[1][j].set_yticks([])
-            ax[1][j].set_title(
-                "Timestep {timestep} (Masked Input)".format(timestep=j + 1),
-                fontsize=10)
+            ax[1][j + 1].imshow(masked_origin[0][j][0].cpu().detach().numpy())
+            ax[1][j + 1].set_xticks([])
+            ax[1][j + 1].set_yticks([])
+            ax[1][j + 1].set_title("Timestep {timestep}".format(timestep=j + 1),
+                                   fontsize=10)
         for k in range(rollout_times):
             for j in range(seq_len):
                 # visualise output
-                ax[2 * k + 2][j].imshow(
+                ax[2 * k + 2][j + 1].imshow(
                     output_chunks[k][0][j][0].cpu().detach().numpy())
-                ax[2 * k + 2][j].set_xticks([])
-                ax[2 * k + 2][j].set_yticks([])
-                ax[2 * k + 2][j].set_title(
-                    "Timestep {timestep} (Prediction)".format(
-                        timestep=j + (k + 1) * seq_len),
-                    fontsize=10)
+                ax[2 * k + 2][j + 1].set_xticks([])
+                ax[2 * k + 2][j + 1].set_yticks([])
+                ax[2 * k + 2][j + 1].set_title("Timestep {timestep}".format(
+                    timestep=j + (k + 1) * seq_len),
+                                               fontsize=10)
                 # visualise target
-                ax[2 * k + 3][j].imshow(
+                ax[2 * k + 3][j + 1].imshow(
                     target_chunks[k][0][j][0].cpu().detach().numpy())
-                ax[2 * k + 3][j].set_xticks([])
-                ax[2 * k + 3][j].set_yticks([])
-                ax[2 * k + 3][j].set_title(
-                    "Timestep {timestep} (Target)".format(timestep=j +
-                                                          (k + 1) * seq_len),
-                    fontsize=10)
+                ax[2 * k + 3][j + 1].set_xticks([])
+                ax[2 * k + 3][j + 1].set_yticks([])
+                ax[2 * k + 3][j + 1].set_title("Timestep {timestep}".format(
+                    timestep=j + (k + 1) * seq_len),
+                                               fontsize=10)
         plt.tight_layout()
         plt.savefig(os.path.join(save_path, f"{idx}.png"))
         plt.close()

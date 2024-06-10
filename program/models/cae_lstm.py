@@ -85,15 +85,21 @@ class ConvAutoencoder(nn.Module):
                                padding=1,
                                output_padding=1),  # Upscales to 128x128
         )
-        # output_padding parameter is used in some layers to ensure that the spatial dimensions are correctly upscaled,
-        # especially when the stride is more than 1
 
         # Batch normalization for the encoder's output (latent code)
         self.bn = nn.BatchNorm2d(self.latent_dim, affine=False)
 
-    def forward(self, x):
-        latent_code = self.encoder(x)
-        x_hat = self.decoder(latent_code)
+    def forward(self, x, sequence_input=False):
+        if sequence_input:
+            batch_size, sequence_length, channels, height, width = x.shape
+            x = x.view(batch_size * sequence_length, channels, height, width)
+            latent_code = self.encoder(x)
+            latent_code = latent_code.view(batch_size, sequence_length, -1)
+            x_hat = self.decoder(latent_code.view(batch_size * sequence_length, -1))
+            x_hat = x_hat.view(batch_size, sequence_length, channels, height, width)
+        else:
+            latent_code = self.encoder(x)
+            x_hat = self.decoder(latent_code)
 
         return {'latent_code': latent_code, 'x_hat': x_hat}
 

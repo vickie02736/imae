@@ -8,6 +8,7 @@ class Evaluator(Engine):
     def __init__(self, rank, config, dataset, model, test_flag=False):
         super(Evaluator, self).__init__(rank, config, dataset, model)
         self.test_flag = test_flag
+        self.valid_loader = self.init_dataloader()
         self.loss_functions, self.running_losses = self.init_eval_metrics()
         self.valid_losses = {}
 

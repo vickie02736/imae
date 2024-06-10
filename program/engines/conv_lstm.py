@@ -40,7 +40,7 @@ class ConvLstmTrainer(Trainer, Evaluator):
         total_predict_loss = 0.0
         total_rollout_loss = 0.0
 
-        for i, sample in enumerate(self.dataloader):
+        for i, sample in enumerate(self.train_loader):
             origin, idx = mask(sample["Input"],
                                mask_mtd=self.config["mask_method"])
             origin = self.interpolation_fn(origin, idx)
@@ -83,23 +83,23 @@ class ConvLstmTrainer(Trainer, Evaluator):
                 epoch, loss_data,
                 os.path.join(self.config['convlstm']['save_loss'],
                              self.interpolation, 'train_losses.json'))
-            self.save_checkpoint(
-                epoch,
-                os.path.join(self.config['convlstm']['save_checkpoint'],
-                             self.interpolation, f'checkpoint_{epoch}.pth'))
+            if epoch %20 == 0:
+                self.save_checkpoint(
+                    epoch,
+                    os.path.join(self.config['convlstm']['save_checkpoint'],
+                                self.interpolation, f'checkpoint_{epoch}.pth'))
 
     def evaluate_epoch(self, epoch):
         self.model.eval()
         with torch.no_grad():
 
-            for i, sample in enumerate(self.dataloader):
+            for i, sample in enumerate(self.valid_loader):
                 origin_before_masked = copy.deepcopy(sample["Input"])
                 masked_origin, idx = mask(sample["Input"],
                                           mask_mtd=self.config["mask_method"])
                 masked_plot = copy.deepcopy(masked_origin)
                 origin = self.interpolation_fn(masked_origin, idx)
                 interpolated_plot = copy.deepcopy(origin)
-                print(interpolated_plot.shape)
                 origin = origin.float().to(self.device)
                 target = sample["Target"].float().to(self.device)
                 target_chunks = torch.chunk(target, self.rollout_times, dim=1)
@@ -167,52 +167,58 @@ class ConvLstmTrainer(Trainer, Evaluator):
              target_chunks, seq_len, idx, save_path):
         rollout_times = self.config['train']['rollout_times']
         _, ax = plt.subplots(rollout_times * 2 + 3,
-                             seq_len,
-                             figsize=(seq_len * 2, rollout_times * 4 + 2))
+                             seq_len + 1,
+                             figsize=(seq_len * 2 + 2, rollout_times * 4 + 6))
+        row_titles = [
+            "Original input", "Masked input", "Interpolated input",
+            "Direct prediction", "Target", "Rollout prediction", "Target"
+        ]
+        for i, title in enumerate(row_titles):
+            ax[i][0].text(1.0,
+                          0.5,
+                          title,
+                          verticalalignment='center',
+                          horizontalalignment='right',
+                          fontsize=12)
+            ax[i][0].axis('off')
         for j in range(seq_len):
             # visualise input
-            ax[0][j].imshow(origin[0][j][0].cpu().detach().numpy())
-            ax[0][j].set_xticks([])
-            ax[0][j].set_yticks([])
-            ax[0][j].set_title(
-                "Timestep {timestep} (Input)".format(timestep=j + 1),
-                fontsize=10)
+            ax[0][j + 1].imshow(origin[0][j][0].cpu().detach().numpy())
+            ax[0][j + 1].set_xticks([])
+            ax[0][j + 1].set_yticks([])
+            ax[0][j + 1].set_title("Timestep {timestep}".format(timestep=j + 1),
+                                   fontsize=10)
             # visualise masked input
-            ax[1][j].imshow(masked_origin[0][j][0].cpu().detach().numpy())
-            ax[1][j].set_xticks([])
-            ax[1][j].set_yticks([])
-            ax[1][j].set_title(
-                "Timestep {timestep} (Masked Input)".format(timestep=j + 1),
-                fontsize=10)
+            ax[1][j + 1].imshow(masked_origin[0][j][0].cpu().detach().numpy())
+            ax[1][j + 1].set_xticks([])
+            ax[1][j + 1].set_yticks([])
+            ax[1][j + 1].set_title("Timestep {timestep}".format(timestep=j + 1),
+                                   fontsize=10)
             # visualise interpolated input
-            ax[2][j].imshow(
+            ax[2][j + 1].imshow(
                 interpolated_origin[0][j][0].cpu().detach().numpy())
-            ax[2][j].set_xticks([])
-            ax[2][j].set_yticks([])
-            ax[2][j].set_title(
-                "Timestep {timestep} (Interpolated Input)".format(timestep=j +
-                                                                  1),
-                fontsize=10)
+            ax[2][j + 1].set_xticks([])
+            ax[2][j + 1].set_yticks([])
+            ax[2][j + 1].set_title("Timestep {timestep}".format(timestep=j + 1),
+                                   fontsize=10)
         for k in range(rollout_times):
             for j in range(seq_len):
                 # visualise output
-                ax[2 * k + 3][j].imshow(
+                ax[2 * k + 3][j + 1].imshow(
                     output_chunks[k][0][j][0].cpu().detach().numpy())
-                ax[2 * k + 3][j].set_xticks([])
-                ax[2 * k + 3][j].set_yticks([])
-                ax[2 * k + 3][j].set_title(
-                    "Timestep {timestep} (Prediction)".format(
-                        timestep=j + (k + 1) * seq_len),
-                    fontsize=10)
+                ax[2 * k + 3][j + 1].set_xticks([])
+                ax[2 * k + 3][j + 1].set_yticks([])
+                ax[2 * k + 3][j + 1].set_title("Timestep {timestep}".format(
+                    timestep=j + (k + 1) * seq_len + 1),
+                                               fontsize=10)
                 # visualise target
-                ax[2 * k + 4][j].imshow(
+                ax[2 * k + 4][j + 1].imshow(
                     target_chunks[k][0][j][0].cpu().detach().numpy())
-                ax[2 * k + 4][j].set_xticks([])
-                ax[2 * k + 4][j].set_yticks([])
-                ax[2 * k + 4][j].set_title(
-                    "Timestep {timestep} (Target)".format(timestep=j +
-                                                          (k + 1) * seq_len),
-                    fontsize=10)
+                ax[2 * k + 4][j + 1].set_xticks([])
+                ax[2 * k + 4][j + 1].set_yticks([])
+                ax[2 * k + 4][j + 1].set_title("Timestep {timestep}".format(
+                    timestep=j + (k + 1) * seq_len + 1),
+                                               fontsize=10)
         plt.tight_layout()
         plt.savefig(os.path.join(save_path, f"{idx}.png"))
         plt.close()
