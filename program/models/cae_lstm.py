@@ -5,10 +5,11 @@ import torch.nn as nn
 
 class ConvAutoencoder(nn.Module):
 
-    def __init__(self, latent_dim, input_channels=3):
+    def __init__(self, config):
         super(ConvAutoencoder, self).__init__()
 
-        self.latent_dim = latent_dim
+        self.latent_dim = config['cae']['latent_dim']
+        input_channels = config['channels']
 
         #initialize encoder and decoder
         self.encode = nn.Sequential(
@@ -125,9 +126,12 @@ class ConvAutoencoder(nn.Module):
 
 class LSTMPredictor(nn.Module):
 
-    def __init__(self, input_size, hidden_size):
+    def __init__(self, config):
 
         super(LSTMPredictor, self).__init__()
+
+        input_size = config['cae']['latent_dim']
+        hidden_size = config['cae_lstm']['hidden_dim']
 
         self.lstm = nn.LSTM(
             input_size=

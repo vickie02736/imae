@@ -32,7 +32,7 @@ def get_args_parser():
                         help='Train the model')
     parser.add_argument('--resume-epoch',
                         type=int_or_string,
-                        default=0,
+                        default=1,
                         help='start epoch after last training')
     parser.add_argument('--database',
                         type=str,
@@ -53,6 +53,7 @@ def get_args_parser():
                              type=int,
                              default=200,
                              help='Number of epochs')
+    train_group.add_argument('--save-frequency', type=int, default=20, help='Save once after how many epochs of training')
 
     test_group = parser.add_argument_group()
     test_group.add_argument(
@@ -64,6 +65,7 @@ def get_args_parser():
                             type=float,
                             default=0.1,
                             help='Mask ratio')
+    test_group.add_argument('--test-flag', type=bool, default=False, help='Test flag')
 
     return parser
 
@@ -82,20 +84,25 @@ def main():
 
     end_epoch = args.resume_epoch + args.epochs
 
-    # load database
+    # load config
     if args.database == 'shallow_water':
-        config = yaml.load(open("../configs/sw_train_config.yaml", "r"),
-                           Loader=yaml.FullLoader)
-        data_config = yaml.load(open("../database/shallow_water/config.yaml",
-                                     "r"),
-                                Loader=yaml.FullLoader)
+        config = yaml.load(open("../configs/sw_train_config.yaml", "r"), Loader=yaml.FullLoader)
+        data_config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
+
+    elif args.database == 'moving_mnist':
+        config = yaml.load(open("../configs/mm_train_config.yaml", "r"), Loader=yaml.FullLoader)
+        # data_config = yaml.load(open("../database/moving_mnist/config.yaml", "r"), Loader=yaml.FullLoader)
+    else:
+        pass
+
+    # load database
+    if args.database == 'shallow_water':        
         from database.shallow_water.dataset import seq_DataBuilder, fra_DataBuilder
         valid_dataset = seq_DataBuilder(data_config['valid_file'],
                                         config['seq_length'],
                                         config['valid']['rollout_times'],
                                         timestep=100)
         if args.model_name == 'cae':
-            print(args.model_name)
             train_dataset = fra_DataBuilder(data_config['train_file'],
                                             timestep=100)
         else:
@@ -104,11 +111,6 @@ def main():
                                             config['train']['rollout_times'],
                                             timestep=100)
     elif args.database == 'moving_mnist':
-        config = yaml.load(open("../configs/mm_train_config.yaml", "r"),
-                           Loader=yaml.FullLoader)
-        data_config = yaml.load(open("../database/moving_mnist/config.yaml",
-                                     "r"),
-                                Loader=yaml.FullLoader)
         from database.moving_mnist.dataset import seq_DataBuilder
         train_dataset = seq_DataBuilder(config['seq_length'],
                                         config['train']['rollout_times'],
@@ -119,84 +121,37 @@ def main():
     else:
         pass
 
-    if args.model_name == 'imae':
-        from models import VisionTransformer
-        from engines import ImaeTrainer
-        os.makedirs(config['imae']['save_checkpoint'], exist_ok=True)
-        os.makedirs(config['imae']['save_reconstruct'], exist_ok=True)
-        os.makedirs(config['imae']['save_loss'], exist_ok=True)
 
-        model = VisionTransformer(args.database,
-                                  data_config['channels'],
-                                  data_config['image_size'],
-                                  config['patch_size'],
-                                  num_layers=config['imae']['num_layers'],
-                                  nhead=config['imae']['nhead'])
-        engine = ImaeTrainer(rank, config, train_dataset, valid_dataset, model,
-                             args.epochs, args.resume_epoch)
-        for epoch in tqdm(range(args.resume_epoch, end_epoch),
-                          desc="Epoch progress"):
-            engine.train_epoch(epoch)
-            engine.evaluate_epoch(epoch)
+    if args.model_name == 'imae':
+        from engines import ImaeTrainer
+        engine = ImaeTrainer(rank, args, train_dataset, valid_dataset)
 
     elif args.model_name == 'convlstm':
         from models import ConvLSTM
         from engines import ConvLstmTrainer
-        os.makedirs(os.path.join(config['convlstm']['save_checkpoint'],
-                                 args.interpolation),
-                    exist_ok=True)
-        os.makedirs(os.path.join(config['convlstm']['save_reconstruct'],
-                                 args.interpolation),
-                    exist_ok=True)
-        os.makedirs(os.path.join(config['convlstm']['save_loss'],
-                                 args.interpolation),
-                    exist_ok=True)
-        model = ConvLSTM(config['channels'], config['convlstm']['hidden_dim'],
-                         tuple(config['convlstm']['kernel_size']),
-                         config['convlstm']['num_layers'])
+        model = ConvLSTM(config)
         engine = ConvLstmTrainer(rank, config, train_dataset, valid_dataset,
                                  model, args.epochs, args.resume_epoch,
                                  args.interpolation)
-        for epoch in tqdm(range(args.resume_epoch, end_epoch),
-                          desc="Epoch progress"):
-            engine.train_epoch(epoch)
-            engine.evaluate_epoch(epoch)
 
     elif args.model_name == 'cae':
-        from models import ConvAutoencoder
         from engines import CaeTrainer
-        os.makedirs(config['cae']['save_checkpoint'], exist_ok=True)
-        os.makedirs(config['cae']['save_reconstruct'], exist_ok=True)
-        os.makedirs(config['cae']['save_loss'], exist_ok=True)
-        model = ConvAutoencoder(config['cae']['latent_dim'], config['channels'])
-        engine = CaeTrainer(rank, config, train_dataset, valid_dataset, model,
-                            args.epochs, args.resume_epoch)
-        for epoch in tqdm(range(args.resume_epoch, end_epoch),
-                          desc="Epoch progress"):
-            engine.train_epoch(epoch)
-            engine.evaluate_epoch(epoch)
+        engine = CaeTrainer(rank, args, train_dataset, valid_dataset)
 
     elif args.model_name == 'cae_lstm':
-        from models import ConvAutoencoder, LSTMPredictor
         from engines import CaeLstmTrainer
-        os.makedirs(config['cae_lstm']['save_checkpoint'], exist_ok=True)
-        os.makedirs(config['cae_lstm']['save_reconstruct'], exist_ok=True)
-        os.makedirs(config['cae_lstm']['save_loss'], exist_ok=True)
-        cae_model = ConvAutoencoder(config['cae']['latent_dim'],
-                                    config['channels'])
-        model = LSTMPredictor(cae_model, config['cae']['latent_dim'],
-                              config['cae_lstm']['hidden_dim'])
+        model = LSTMPredictor(config)
         engine = CaeLstmTrainer(rank, config, train_dataset, valid_dataset,
                                 model, cae_model, args.epochs,
                                 args.resume_epoch, args.interpolation)
-        engine.load_cae(epoch=0)
-        for epoch in tqdm(range(args.resume_epoch, end_epoch),
-                          desc="Epoch progress"):
-            engine.train_epoch(epoch)
-            engine.evaluate_epoch(epoch)
+
     else:
         pass
 
+    for epoch in tqdm(range(args.resume_epoch, end_epoch),
+                        desc="Epoch progress"):
+        engine.train_epoch(epoch)
+        engine.evaluate_epoch(epoch)
 
 if __name__ == "__main__":
     main()

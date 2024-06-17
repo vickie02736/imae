@@ -4,26 +4,22 @@ import json
 import torch
 from matplotlib import pyplot as plt
 
-from program.engines.trainer import Trainer
-from program.engines.evaluator import Evaluator
-from program.utils.tools import save_losses, mask
+from models import ConvAutoencoder, LSTMPredictor
+from .trainer import Trainer
+from .evaluator import Evaluator
+from utils import save_losses, mask
 
 class CaeTrainer(Trainer, Evaluator):
+    def __init__(self, rank, args, train_dataset, eval_dataset):
+        Trainer.__init__(self, rank, args, train_dataset)
+        Evaluator.__init__(self, rank, args, eval_dataset)
+        self.load_model()   # Here
+        self.setup()        # Engine
+        self.init_training_components() # Trainer
+        Trainer.load_checkpoint(self)
 
-    def __init__(self,
-                 rank,
-                 config,
-                 train_dataset,
-                 valid_dataset,
-                 model,
-                 epochs,
-                 resume_epoch,
-                 test_flag=False):
-        Trainer.__init__(self, rank, config, train_dataset, model, epochs,
-                         resume_epoch)
-        Evaluator.__init__(self, rank, config, valid_dataset, model, test_flag)
-
-        self.load_checkpoint()
+    def load_model(self):
+        self.model = ConvAutoencoder(self.config)
 
     def train_epoch(self, epoch):
         torch.manual_seed(epoch)
@@ -57,9 +53,8 @@ class CaeTrainer(Trainer, Evaluator):
             }
             save_losses(
                 epoch, loss_data,
-                os.path.join(self.config['cae']['save_loss'],
-                             'train_losses.json'))
-            if epoch % 20 == 0:
+                os.path.join(self.config['cae']['save_loss'], 'train_losses.json'))
+            if epoch % self.args.save_frequency == 0:
                 self.save_checkpoint(
                     epoch,
                     os.path.join(self.config['cae']['save_checkpoint'], f'checkpoint_{epoch}.pth'))
@@ -68,7 +63,7 @@ class CaeTrainer(Trainer, Evaluator):
         self.model.eval()
         with torch.no_grad():
 
-             for i, sample in enumerate(self.valid_loader):
+             for i, sample in enumerate(self.eval_loader):
                 origin_plot = copy.deepcopy(sample["Input"])
                 origin = sample["Input"].float().to(self.device)
                 target = sample["Input"].float().to(self.device)
@@ -88,39 +83,16 @@ class CaeTrainer(Trainer, Evaluator):
                 chunk_losses = {}
                 for metric, running_loss_list in self.running_losses.items():
                     total_loss = sum(running_loss_list)
-                    average_loss = total_loss / len(self.valid_loader.dataset)
+                    average_loss = total_loss / len(self.eval_loader.dataset)
                     chunk_losses[metric] = average_loss
                 save_losses(
                     epoch, chunk_losses,
                     os.path.join(self.config['cae']['save_loss'], 'valid_losses.json'))
 
 
-    def load_checkpoint(self):
-        if self.resume_epoch == 0:
-            torch.save(
-                self.model.state_dict(),
-                os.path.join(self.config['cae']['save_checkpoint'], 'init.pth'))
-            losses = {}
-            with open(
-                    os.path.join(self.config['cae']['save_loss'], 'train_losses.json'), 'w') as file:
-                json.dump(losses, file)
-            with open(
-                    os.path.join(self.config['cae']['save_loss'], 'valid_losses.json'), 'w') as file:
-                json.dump(losses, file)
-        else:
-            checkpoint_path = os.path.join(
-                self.config['cae']['save_checkpoint'], f'checkpoint_{self.resume_epoch-1}.pth')
-            checkpoint = torch.load(checkpoint_path, map_location=self.device)
-            self.model.load_state_dict(checkpoint['model'])
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
-            self.scheduler.load_state_dict(checkpoint['scheduler'])
-            self.scaler.load_state_dict(checkpoint['scaler'])
-
     def plot(self, input, output, target, seq_len, idx, save_path):
         rollout_times = self.config['train']['rollout_times']
-        _, ax = plt.subplots(rollout_times * 2 + 3,
-                             seq_len + 1,
-                             figsize=(seq_len * 2 + 2, rollout_times * 4 + 6))
+        _, ax = plt.subplots(3, seq_len + 1, figsize=(seq_len * 2 + 2, 6))
         row_titles = ["Input", "Output", "Target"]
         for i, title in enumerate(row_titles):
             ax[i][0].text(1.0,
@@ -160,15 +132,9 @@ class CaeLstmTrainer(Trainer, Evaluator):
 
     def __init__(self,
                  rank,
-                 config,
+                 args,
                  train_dataset,
-                 valid_dataset,
-                 model, 
-                 cae_model,
-                 epochs,
-                 resume_epoch,
-                 interpolation,
-                 test_flag=False):
+                 valid_dataset):
         Trainer.__init__(self, rank, config, train_dataset, model, epochs,
                          resume_epoch)
         Evaluator.__init__(self, rank, config, valid_dataset, model, test_flag)
@@ -181,6 +147,9 @@ class CaeLstmTrainer(Trainer, Evaluator):
         self.interpolation_fn = interpolation_fn
 
         self.load_checkpoint()
+
+    def load_model(self):
+        self.model = LSTMPredictor(self.config)
 
     def train_epoch(self, epoch):
         torch.manual_seed(epoch)

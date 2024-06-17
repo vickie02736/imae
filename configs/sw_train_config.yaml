@@ -1,9 +1,6 @@
 database: shallow_water
 image_size: 128
 channels: 3
-
-batch_size: 32 #A100 128
-patch_size: 16
 seq_length: 10
 mask_method: "zeros"
 
@@ -11,9 +8,11 @@ mask_method: "zeros"
 imae: 
   num_layers: 6
   nhead: 6
+  patch_size: 16
   save_loss: '../data/shallow_water/imae/loss/'
   save_checkpoint: '../data/shallow_water/imae/ckpt/'
   save_reconstruct: '../data/shallow_water/imae/rec/'
+  batch_size: 32
 
 
 convlstm:
@@ -23,18 +22,21 @@ convlstm:
   save_loss: '../data/shallow_water/convlstm/loss/'
   save_checkpoint: '../data/shallow_water/convlstm/ckpt/'
   save_reconstruct: '../data/shallow_water/convlstm/rec/'
+  batch_size: 32
 
 cae:
   latent_dim: 128
   save_loss: '../data/shallow_water/cae/loss/'
   save_checkpoint: '../data/shallow_water/cae/ckpt/'
   save_reconstruct: '../data/shallow_water/cae/rec/'
+  batch_size: 32
 
-caelstm: 
+cae_lstm: 
   hidden_dim: 1280
   save_loss: '../data/shallow_water/caelstm/loss/'
   save_checkpoint: '../data/shallow_water/caelstm/ckpt/'
   save_reconstruct: '../data/shallow_water/caelstm/rec/'
+  batch_size: 32
 
 
 train:

@@ -96,15 +96,16 @@ class ConvLSTM(nn.Module):
         >> h = last_states[0][0]  # 0 for layer index, 0 for h index
     """
 
-    def __init__(self,
-                 input_dim,
-                 hidden_dim,
-                 kernel_size,
-                 num_layers,
+    def __init__(self, config,
                  batch_first=True,
                  bias=True,
                  return_all_layers=False):
         super(ConvLSTM, self).__init__()
+
+        input_dim = config['channels']
+        hidden_dim = config['convlstm']['hidden_dim']
+        kernel_size = tuple(config['convlstm']['kernel_size'])
+        num_layers = config['convlstm']['num_layers']
 
         self._check_kernel_size_consistency(kernel_size)
 
@@ -123,9 +124,7 @@ class ConvLSTM(nn.Module):
 
         cell_list = []
         for i in range(0, self.num_layers):
-            cur_input_dim = self.input_dim if i == 0 else self.hidden_dim[i -
-                                                                          1]
-
+            cur_input_dim = self.input_dim if i == 0 else self.hidden_dim[i - 1]
             cell_list.append(
                 ConvLSTMCell(input_dim=cur_input_dim,
                              hidden_dim=self.hidden_dim[i],

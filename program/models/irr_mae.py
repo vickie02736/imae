@@ -4,23 +4,20 @@ import torch.nn as nn
 
 class VisionTransformer(nn.Module):
 
-    def __init__(self,
-                 database,
-                 channel_num,
-                 image_len,
-                 patch_len,
-                 num_layers=6,
-                 nhead=8):
+    def __init__(self, config):
 
         super().__init__()
 
-        self.channel_num = channel_num
-        self.patch_len = patch_len
-        self.image_len = image_len
+        self.database = config['database']
+        self.channel_num = config['channels']
+        self.image_len = config['image_size']
+        self.patch_len = config['imae']['patch_size']
+        self.num_layers = config['imae']['num_layers']
+        self.nhead = config['imae']['nhead']
 
-        self.side_patch_num = image_len // patch_len
+        self.side_patch_num = self.image_len // self.patch_len
         self.patch_embedding_num = self.side_patch_num**2
-        self.patch_embedding_len = channel_num * patch_len * patch_len
+        self.patch_embedding_len = self.channel_num * self.patch_len * self.patch_len
 
         self.start_embedding = nn.Parameter(
             torch.zeros(1, self.patch_embedding_len))
@@ -33,13 +30,11 @@ class VisionTransformer(nn.Module):
         self.random_tensor = torch.randn(self.channel_num, self.image_len,
                                          self.image_len)  # for random masking
 
-        self.nhead = nhead
         transform_layer = nn.TransformerEncoderLayer(
             d_model=self.patch_embedding_len,
             nhead=self.nhead,
             dropout=0.0,
             batch_first=True)
-        self.num_layers = num_layers
         self.transformer = nn.TransformerEncoder(transform_layer,
                                                  num_layers=self.num_layers)
 
@@ -52,20 +47,19 @@ class VisionTransformer(nn.Module):
         self.batch_encoder = torch.vmap(self.encoder)
         self.batch_decoder = torch.vmap(self.decoder)
 
-        self.database = database
         if self.database == 'shallow_water':
-            self.conv = nn.Conv2d(channel_num,
-                                  channel_num,
+            self.conv = nn.Conv2d(self.channel_num,
+                                  self.channel_num,
                                   kernel_size=3,
                                   padding=1)
             self.seq_conv = torch.vmap(self.conv)
         elif self.database == 'moving_mnist':
-            self.conv1 = nn.Conv2d(channel_num,
-                                   3 * channel_num,
+            self.conv1 = nn.Conv2d(self.channel_num,
+                                   3 * self.channel_num,
                                    kernel_size=3,
                                    padding=1)
-            self.conv2 = nn.Conv2d(3 * channel_num,
-                                   channel_num,
+            self.conv2 = nn.Conv2d(3 * self.channel_num,
+                                   self.channel_num,
                                    kernel_size=3,
                                    padding=1)
             self.seq_conv1 = torch.vmap(self.conv1)

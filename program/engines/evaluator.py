@@ -1,21 +1,26 @@
 import torch.nn as nn
 from program.utils.metrics import RMSELoss, PSNRLoss, SSIMLoss
 from program.engines.engine import Engine
+from torch.utils.data import DataLoader, DistributedSampler
 
 
 class Evaluator(Engine):
+    def __init__(self, rank, args, eval_dataset):
+        super(Evaluator, self).__init__(rank, args)
+        self.eval_dataset = eval_dataset
+        self.init_eval_dataloader()
 
-    def __init__(self, rank, config, dataset, model, test_flag=False):
-        super(Evaluator, self).__init__(rank, config, dataset, model)
-        self.test_flag = test_flag
-        self.valid_loader = self.init_dataloader()
         self.loss_functions, self.running_losses = self.init_eval_metrics()
-        self.valid_losses = {}
+
+    def init_eval_dataloader(self):
+        sampler = DistributedSampler(self.eval_dataset, num_replicas=self.world_size, rank=self.rank)
+        self.eval_loader = DataLoader(self.eval_dataset, batch_size=self.config[self.args.model_name]['batch_size'],
+                                pin_memory=True, shuffle=False, drop_last=True, sampler=sampler)
 
     def init_eval_metrics(self):
         loss_functions = {}
         running_losses = {}
-        if self.test_flag:
+        if self.args.test_flag:
             metrics = self.config['test']['metric']
             self.rollout_times = self.config['test']['rollout_times']
         else:
