@@ -90,29 +90,42 @@ class ConvAutoencoder(nn.Module):
         # Batch normalization for the encoder's output (latent code)
         self.bn = nn.BatchNorm2d(self.latent_dim, affine=False)
 
-    def forward(self, x, sequence_input=False):
-        if sequence_input:
-            batch_size, sequence_length, channels, height, width = x.shape
-            x = x.view(batch_size * sequence_length, channels, height, width)
-            latent_code = self.encoder(x)
-            latent_code = latent_code.view(batch_size, sequence_length, -1)
-            x_hat = self.decoder(latent_code.view(batch_size * sequence_length, -1))
-            x_hat = x_hat.view(batch_size, sequence_length, channels, height, width)
-        else:
-            latent_code = self.encoder(x)
-            x_hat = self.decoder(latent_code)
+    def forward(self, x):
+        # if x.dim() == 5:
+        #     batch_size, sequence_length, channels, height, width = x.shape
+        #     x = x.view(batch_size * sequence_length, channels, height, width)
+        #     x = self.encoder(x)
+        #     x = x.view(batch_size, sequence_length, -1)
+        #     x = self.decoder(x.view(batch_size * sequence_length, -1))
+        #     x = x.view(batch_size, sequence_length, channels, height, width)
+        # else:
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
 
-        return {'latent_code': latent_code, 'x_hat': x_hat}
 
     def encoder(self, x):
-        x = self.encode(x)
-        x = self.bn(x)
-        x = x.reshape(x.shape[0], -1)
+        if x.dim() == 5:  # If input has sequence dimension
+            batch_size, sequence_length, channels, height, width = x.shape
+            x = x.view(batch_size * sequence_length, channels, height, width)
+            x = self.encode(x)
+            x = self.bn(x)
+            x = x.view(batch_size, sequence_length, -1)
+        else: 
+            x = self.encode(x)
+            x = self.bn(x)
+            x = x.view(x.shape[0], -1)
         return x
 
     def decoder(self, x):
-        x = x.unsqueeze(2).unsqueeze(3)
-        x = self.decode(x)
+        if x.dim() == 3:  # If input has sequence dimension
+            batch_size, sequence_length, _ = x.shape
+            x = x.view(batch_size * sequence_length, self.latent_dim, 1, 1)
+            x = self.decode(x)
+            x = x.view(batch_size, sequence_length, *x.shape[1:])
+        else:  
+            x = x.view(x.shape[0], self.latent_dim, 1, 1)
+            x = self.decode(x)
         return x
 
 
@@ -134,13 +147,10 @@ class LSTMPredictor(nn.Module):
         hidden_size = config['cae_lstm']['hidden_dim']
 
         self.lstm = nn.LSTM(
-            input_size=
-            input_size,  # The number of expected features in the input.
-            hidden_size=
-            hidden_size,  # The number of features in the hidden state.
-            num_layers=5,  # The number of recurrent layers.
-            dropout=
-            0.5,  # Dropout probability for each LSTM layer except the last one
+            input_size=input_size, 
+            hidden_size=hidden_size,  
+            num_layers=5,  
+            dropout=0.5,  
             batch_first=True)
 
         self.linear = nn.Linear(hidden_size, hidden_size)

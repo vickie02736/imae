@@ -127,12 +127,8 @@ def main():
         engine = ImaeTrainer(rank, args, train_dataset, valid_dataset)
 
     elif args.model_name == 'convlstm':
-        from models import ConvLSTM
         from engines import ConvLstmTrainer
-        model = ConvLSTM(config)
-        engine = ConvLstmTrainer(rank, config, train_dataset, valid_dataset,
-                                 model, args.epochs, args.resume_epoch,
-                                 args.interpolation)
+        engine = ConvLstmTrainer(rank, args, train_dataset, valid_dataset)
 
     elif args.model_name == 'cae':
         from engines import CaeTrainer
@@ -140,10 +136,7 @@ def main():
 
     elif args.model_name == 'cae_lstm':
         from engines import CaeLstmTrainer
-        model = LSTMPredictor(config)
-        engine = CaeLstmTrainer(rank, config, train_dataset, valid_dataset,
-                                model, cae_model, args.epochs,
-                                args.resume_epoch, args.interpolation)
+        engine = CaeLstmTrainer(rank, args, train_dataset, valid_dataset)
 
     else:
         pass

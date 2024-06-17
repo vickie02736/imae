@@ -29,5 +29,8 @@ torchrun --nnodes=1 --nproc_per_node=1 ../program/main.py\
         --resume-epoch 1\
         --database shallow_water\
         --save-frequency 1\
-        --model-name imae
+        --model-name cae_lstm\
+        --interpolation linear
 echo $(date +%d-%m-%Y_%H:%M:%S)
+
+# model name: imae, convlstm, cae, cae_lstm
