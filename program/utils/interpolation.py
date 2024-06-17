@@ -3,7 +3,16 @@ import torch.nn.functional as F
 
 
 def linear_interpolation(batch_frames, known_mask_idx):
-    batch_size, seq_len, channels, height, width = batch_frames.shape
+
+    if batch_frames.dim() == 5:
+        batch_size, seq_len, channels, height, width = batch_frames.shape
+        is_spatial = True
+    elif batch_frames.dim() == 3:
+        batch_size, seq_len, latent_dim = batch_frames.shape
+        is_spatial = False
+    else:
+        raise ValueError("Input batch_frames must be 3D or 5D tensor")
+
     interpolated_frames = batch_frames.clone()
 
     for b in range(batch_size):
@@ -35,39 +44,52 @@ def gaussian_kernel1d(size, sigma):
     g /= g.sum()
     return g
 
-
 def gaussian_interpolation(batch_frames, known_mask_idx, sigma=1.0):
-    batch_size, seq_len, channels, height, width = batch_frames.shape
+    if batch_frames.dim() == 5:
+        batch_size, seq_len, channels, height, width = batch_frames.shape
+        is_spatial = True
+    elif batch_frames.dim() == 3:
+        batch_size, seq_len, latent_dim = batch_frames.shape
+        is_spatial = False
+    else:
+        raise ValueError("Input batch_frames must be a 3D or 5D tensor")
+
     interpolated_frames = batch_frames.clone()
 
     kernel_size = int(6 * sigma + 1)
     if kernel_size % 2 == 0:
         kernel_size += 1
 
-    kernel = gaussian_kernel1d(kernel_size,
-                               sigma).view(1, 1, -1).to(batch_frames.device)
+    kernel = gaussian_kernel1d(kernel_size, sigma).view(1, 1, -1).to(batch_frames.device)
 
     for b in range(batch_size):
-        for c in range(channels):
-            for h in range(height):
-                for w in range(width):
-                    values = batch_frames[b, :, c, h, w]
-                    known_mask = torch.ones(seq_len,
-                                            device=batch_frames.device)
-                    known_mask[known_mask_idx[b]] = 0
+        if is_spatial:
+            for c in range(channels):
+                for h in range(height):
+                    for w in range(width):
+                        values = batch_frames[b, :, c, h, w]
+                        known_mask = torch.ones(seq_len, device=batch_frames.device)
+                        known_mask[known_mask_idx[b]] = 0
+                        smoothed_values = F.conv1d(values.view(1, 1, -1) * known_mask.view(1, 1, -1),
+                                                   kernel, padding=kernel_size // 2)
+                        smoothed_known = F.conv1d(known_mask.view(1, 1, -1),
+                                                  kernel, padding=kernel_size // 2)
 
-                    # Convolve only known values and normalize by known mask convolved
-                    smoothed_values = F.conv1d(values.view(1, 1, -1) *
-                                               known_mask.view(1, 1, -1),
-                                               kernel,
-                                               padding=kernel_size // 2)
-                    smoothed_known = F.conv1d(known_mask.view(1, 1, -1),
-                                              kernel,
-                                              padding=kernel_size // 2)
+                        smoothed_values /= smoothed_known + 1e-10  # Avoid division by zero
+                        interpolated_frames[b, :, c, h, w] = smoothed_values.view(-1)
+        else:
+            for l in range(latent_dim):
+                values = batch_frames[b, :, l]
+                known_mask = torch.ones(seq_len, device=batch_frames.device)
+                known_mask[known_mask_idx[b]] = 0
 
-                    smoothed_values /= smoothed_known + 1e-10  # Avoid division by zero
-                    interpolated_frames[b, :, c, h,
-                                        w] = smoothed_values.view(-1)
+                smoothed_values = F.conv1d(values.view(1, 1, -1) * known_mask.view(1, 1, -1),
+                                           kernel, padding=kernel_size // 2)
+                smoothed_known = F.conv1d(known_mask.view(1, 1, -1),
+                                          kernel, padding=kernel_size // 2)
+
+                smoothed_values /= smoothed_known + 1e-10  # Avoid division by zero
+                interpolated_frames[b, :, l] = smoothed_values.view(-1)
 
     return interpolated_frames
 

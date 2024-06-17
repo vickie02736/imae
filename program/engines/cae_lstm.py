@@ -170,11 +170,13 @@ class CaeLstmTrainer(Trainer, Evaluator):
         total_rollout_loss = 0.0
 
         for i, sample in enumerate(self.train_loader):
+            print(f"Epoch {epoch}, batch {i}")
             origin, idx = mask(sample["Input"],
                                mask_mtd=self.config["mask_method"])
-            origin = self.interpolation_fn(origin, idx)
+            # origin = self.interpolation_fn(origin, idx)
             origin = origin.float().to(self.device)
             origin = self.cae_model.encoder(origin)
+            origin = self.interpolation_fn(origin, idx)
             target = sample["Target"].float().to(self.device)
             target = self.cae_model.encoder(target)
             target_chunks = torch.chunk(target,
@@ -214,7 +216,7 @@ class CaeLstmTrainer(Trainer, Evaluator):
                 epoch, loss_data,
                 os.path.join(self.config['convlstm']['save_loss'],
                              self.args.interpolation, 'train_losses.json'))
-            if epoch % 20 == 0:
+            if epoch % self.args.save_frequency == 0:
                 self.save_checkpoint(
                     epoch,
                     os.path.join(self.config['convlstm']['save_checkpoint'],
@@ -224,43 +226,43 @@ class CaeLstmTrainer(Trainer, Evaluator):
         self.model.eval()
         with torch.no_grad():
             for i, sample in enumerate(self.eval_loader):
-                origin_before_masked = copy.deepcopy(sample["Input"])
-                masked_origin, idx = mask(sample["Input"],
-                                          mask_mtd=self.config["mask_method"])
-                masked_plot = copy.deepcopy(masked_origin)
-                origin = self.interpolation_fn(masked_origin, idx)
-                interpolated_plot = copy.deepcopy(origin)
+                print(f"Epoch {epoch}, valid batch {i}")
+                origin_before_masked = copy.deepcopy(sample["Input"]) # origin_before_masked: full space
+                origin, idx = mask(sample["Input"], 
+                                          mask_mtd=self.config["mask_method"]) 
+                masked_plot = copy.deepcopy(origin) # masked_plot: full space
                 origin = origin.float().to(self.device)
                 latent_origin = self.cae_model.encoder(origin)
+                latent_origin = self.interpolation_fn(latent_origin, idx)
 
                 target = sample["Target"].float().to(self.device)
-                latent_target = self.cae_model.encoder(target)
+                # latent_target = self.cae_model.encoder(target)
                 
                 target_chunks = torch.chunk(target, self.rollout_times, dim=1)
-                latent_target_chunks = torch.chunk(latent_target, self.rollout_times, dim=1)
+                # latent_target_chunks = torch.chunk(latent_target, self.rollout_times, dim=1)
 
                 output_chunks = []
-                latent_output_chunks = []
+                # latent_output_chunks = []
                 for j, chunk in enumerate(target_chunks):
                     if j == 0:
                         latent_output = self.model(latent_origin)
                     else:
                         latent_output = self.model(latent_output)
-                    output_chunks.append(latent_output)
+                    # output_chunks.append(latent_output)
                     output = self.cae_model.decoder(latent_output)
                     output_chunks.append(output)
+
+                    # Compute losses
+                    for metric, loss_fn in self.loss_functions.items():
+                        loss = loss_fn(output, chunk)
+                        self.running_losses[metric][j] += loss.item()                
+                
                 if i == 1:
                     save_path = os.path.join(
                         self.config['convlstm']['save_reconstruct'],
                         self.args.interpolation)
-                    self.plot(origin_before_masked, masked_plot,
-                              interpolated_plot, output_chunks, target_chunks,
+                    self.plot(origin_before_masked, masked_plot, output_chunks, target_chunks,
                               self.config['seq_length'], epoch, save_path)
-
-                # Compute losses
-                for metric, loss_fn in self.loss_functions.items():
-                    loss = loss_fn(output, chunk)
-                    self.running_losses[metric][j] += loss.item()
 
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():
@@ -272,35 +274,8 @@ class CaeLstmTrainer(Trainer, Evaluator):
                 os.path.join(self.config['convlstm']['save_loss'],
                              self.args.interpolation, 'valid_losses.json'))
 
-    def load_checkpoint(self):
-        if self.resume_epoch == 0:
-            torch.save(
-                self.model.state_dict(),
-                os.path.join(self.config['convlstm']['save_checkpoint'],
-                             self.args.interpolation, 'init.pth'))
-            losses = {}
-            with open(
-                    os.path.join(self.config['convlstm']['save_loss'],
-                                 self.args.interpolation, 'train_losses.json'),
-                    'w') as file:
-                json.dump(losses, file)
-            with open(
-                    os.path.join(self.config['convlstm']['save_loss'],
-                                 self.args.interpolation, 'valid_losses.json'),
-                    'w') as file:
-                json.dump(losses, file)
-        else:
-            checkpoint_path = os.path.join(
-                self.config['convlstm']['save_checkpoint'], self.args.interpolation,
-                f'checkpoint_{self.resume_epoch-1}.pth')
-            checkpoint = torch.load(checkpoint_path, map_location=self.device)
-            self.model.load_state_dict(checkpoint['model'])
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
-            self.scheduler.load_state_dict(checkpoint['scheduler'])
-            self.scaler.load_state_dict(checkpoint['scaler'])
 
-    def plot(self, origin, masked_origin, interpolated_origin, output_chunks,
-             target_chunks, seq_len, idx, save_path):
+    def plot(self, origin, masked_origin, output_chunks, target_chunks, seq_len, idx, save_path):
         rollout_times = self.config['train']['rollout_times']
         _, ax = plt.subplots(rollout_times * 2 + 3,
                              seq_len + 1,
@@ -330,29 +305,22 @@ class CaeLstmTrainer(Trainer, Evaluator):
             ax[1][j + 1].set_yticks([])
             ax[1][j + 1].set_title("Timestep {timestep}".format(timestep=j + 1),
                                    fontsize=10)
-            # visualise interpolated input
-            ax[2][j + 1].imshow(
-                interpolated_origin[0][j][0].cpu().detach().numpy())
-            ax[2][j + 1].set_xticks([])
-            ax[2][j + 1].set_yticks([])
-            ax[2][j + 1].set_title("Timestep {timestep}".format(timestep=j + 1),
-                                   fontsize=10)
         for k in range(rollout_times):
             for j in range(seq_len):
                 # visualise output
-                ax[2 * k + 3][j + 1].imshow(
+                ax[2 * k + 2][j + 1].imshow(
                     output_chunks[k][0][j][0].cpu().detach().numpy())
-                ax[2 * k + 3][j + 1].set_xticks([])
-                ax[2 * k + 3][j + 1].set_yticks([])
-                ax[2 * k + 3][j + 1].set_title("Timestep {timestep}".format(
+                ax[2 * k + 2][j + 1].set_xticks([])
+                ax[2 * k + 2][j + 1].set_yticks([])
+                ax[2 * k + 2][j + 1].set_title("Timestep {timestep}".format(
                     timestep=j + (k + 1) * seq_len + 1),
                                                fontsize=10)
                 # visualise target
-                ax[2 * k + 4][j + 1].imshow(
+                ax[2 * k + 3][j + 1].imshow(
                     target_chunks[k][0][j][0].cpu().detach().numpy())
-                ax[2 * k + 4][j + 1].set_xticks([])
-                ax[2 * k + 4][j + 1].set_yticks([])
-                ax[2 * k + 4][j + 1].set_title("Timestep {timestep}".format(
+                ax[2 * k + 3][j + 1].set_xticks([])
+                ax[2 * k + 3][j + 1].set_yticks([])
+                ax[2 * k + 3][j + 1].set_title("Timestep {timestep}".format(
                     timestep=j + (k + 1) * seq_len + 1),
                                                fontsize=10)
         plt.tight_layout()

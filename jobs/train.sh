@@ -33,4 +33,4 @@ torchrun --nnodes=1 --nproc_per_node=1 ../program/main.py\
         --interpolation linear
 echo $(date +%d-%m-%Y_%H:%M:%S)
 
-# model name: imae, convlstm, cae, cae_lstm
+# model name: imae, convlstm, cae, cae_lstm 

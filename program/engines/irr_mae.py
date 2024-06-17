@@ -101,6 +101,10 @@ class ImaeTrainer(Trainer, Evaluator):
                     else:
                         output = self.model(output)
                     output_chunks.append(output)
+                    # Compute losses
+                    for metric, loss_fn in self.loss_functions.items():
+                        loss = loss_fn(output, chunk)
+                        self.running_losses[metric][j] += loss.item()
 
                 if i == 1:
                     self.plot(epoch, origin_before_masked, origin_plot,
@@ -108,11 +112,6 @@ class ImaeTrainer(Trainer, Evaluator):
                               self.config['valid']['rollout_times'],
                               self.config['seq_length'],
                               self.config['imae']['save_reconstruct'])
-
-                # Compute losses
-                for metric, loss_fn in self.loss_functions.items():
-                    loss = loss_fn(output, chunk)
-                    self.running_losses[metric][j] += loss.item()
 
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():

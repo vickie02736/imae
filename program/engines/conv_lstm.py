@@ -110,7 +110,11 @@ class ConvLstmTrainer(Trainer, Evaluator):
                     else:
                         output = self.model(output)
                     output_chunks.append(output)
-
+                    # Compute losses
+                    for metric, loss_fn in self.loss_functions.items():
+                        loss = loss_fn(output, chunk)
+                        self.running_losses[metric][j] += loss.item()
+                        
                 if i == 1:
                     save_path = os.path.join(
                         self.config['convlstm']['save_reconstruct'],
@@ -119,10 +123,7 @@ class ConvLstmTrainer(Trainer, Evaluator):
                               interpolated_plot, output_chunks, target_chunks,
                               self.config['seq_length'], epoch, save_path)
 
-                # Compute losses
-                for metric, loss_fn in self.loss_functions.items():
-                    loss = loss_fn(output, chunk)
-                    self.running_losses[metric][j] += loss.item()
+
 
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():
