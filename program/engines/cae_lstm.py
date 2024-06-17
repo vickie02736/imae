@@ -214,12 +214,12 @@ class CaeLstmTrainer(Trainer, Evaluator):
             }
             save_losses(
                 epoch, loss_data,
-                os.path.join(self.config['convlstm']['save_loss'],
+                os.path.join(self.config['cae_lstm']['save_loss'],
                              self.args.interpolation, 'train_losses.json'))
             if epoch % self.args.save_frequency == 0:
                 self.save_checkpoint(
                     epoch,
-                    os.path.join(self.config['convlstm']['save_checkpoint'],
+                    os.path.join(self.config['cae_lstm']['save_checkpoint'],
                                 self.args.interpolation, f'checkpoint_{epoch}.pth'))
 
     def evaluate_epoch(self, epoch):
@@ -227,19 +227,15 @@ class CaeLstmTrainer(Trainer, Evaluator):
         with torch.no_grad():
             for i, sample in enumerate(self.eval_loader):
                 print(f"Epoch {epoch}, valid batch {i}")
-                origin_before_masked = copy.deepcopy(sample["Input"]) # origin_before_masked: full space
+                origin_before_masked = copy.deepcopy(sample["Input"]) 
                 origin, idx = mask(sample["Input"], 
                                           mask_mtd=self.config["mask_method"]) 
-                masked_plot = copy.deepcopy(origin) # masked_plot: full space
+                masked_plot = copy.deepcopy(origin) 
                 origin = origin.float().to(self.device)
                 latent_origin = self.cae_model.encoder(origin)
                 latent_origin = self.interpolation_fn(latent_origin, idx)
-
-                target = sample["Target"].float().to(self.device)
-                # latent_target = self.cae_model.encoder(target)
-                
+                target = sample["Target"].float().to(self.device)               
                 target_chunks = torch.chunk(target, self.rollout_times, dim=1)
-                # latent_target_chunks = torch.chunk(latent_target, self.rollout_times, dim=1)
 
                 output_chunks = []
                 # latent_output_chunks = []
@@ -248,10 +244,8 @@ class CaeLstmTrainer(Trainer, Evaluator):
                         latent_output = self.model(latent_origin)
                     else:
                         latent_output = self.model(latent_output)
-                    # output_chunks.append(latent_output)
                     output = self.cae_model.decoder(latent_output)
                     output_chunks.append(output)
-
                     # Compute losses
                     for metric, loss_fn in self.loss_functions.items():
                         loss = loss_fn(output, chunk)
@@ -259,8 +253,7 @@ class CaeLstmTrainer(Trainer, Evaluator):
                 
                 if i == 1:
                     save_path = os.path.join(
-                        self.config['convlstm']['save_reconstruct'],
-                        self.args.interpolation)
+                        self.config['cae_lstm']['save_reconstruct'], self.args.interpolation)
                     self.plot(origin_before_masked, masked_plot, output_chunks, target_chunks,
                               self.config['seq_length'], epoch, save_path)
 
@@ -271,18 +264,17 @@ class CaeLstmTrainer(Trainer, Evaluator):
                 chunk_losses[metric] = average_loss
             save_losses(
                 epoch, chunk_losses,
-                os.path.join(self.config['convlstm']['save_loss'],
+                os.path.join(self.config['cae_lstm']['save_loss'],
                              self.args.interpolation, 'valid_losses.json'))
 
 
     def plot(self, origin, masked_origin, output_chunks, target_chunks, seq_len, idx, save_path):
         rollout_times = self.config['train']['rollout_times']
-        _, ax = plt.subplots(rollout_times * 2 + 3,
+        _, ax = plt.subplots(rollout_times * 2 + 2,
                              seq_len + 1,
                              figsize=(seq_len * 2 + 2, rollout_times * 4 + 6))
         row_titles = [
-            "Original input", "Masked input", "Interpolated input",
-            "Direct prediction", "Target", "Rollout prediction", "Target"
+            "Original input", "Masked input", "Direct prediction", "Target", "Rollout prediction", "Target"
         ]
         for i, title in enumerate(row_titles):
             ax[i][0].text(1.0,
