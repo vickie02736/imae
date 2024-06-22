@@ -34,8 +34,9 @@ class ImaeTrainer(Trainer, Evaluator):
         total_rollout_loss = 0.0
 
         for _, sample in enumerate(self.train_loader):
-            origin, _ = mask(sample["Input"],
-                             mask_mtd=self.config["mask_method"])
+            origin  = sample["Input"]
+            if self.args.mask_flag:
+                origin, _ = mask(origin, mask_mtd=self.config["mask_method"])
             origin = origin.float().to(self.device)
             target = sample["Target"].float().to(self.device)
             target_chunks = torch.chunk(target,
@@ -87,9 +88,12 @@ class ImaeTrainer(Trainer, Evaluator):
 
             for i, sample in enumerate(self.eval_loader):
                 origin_before_masked = copy.deepcopy(sample["Input"])
-                origin, _ = mask(sample["Input"],
-                                 mask_mtd=self.config["mask_method"])
-                origin_plot = copy.deepcopy(origin)
+                if self.args.mask_flag:
+                    origin, _ = mask(sample["Input"],
+                                    mask_mtd=self.config["mask_method"])
+                    origin_plot = copy.deepcopy(origin)
+                else:
+                    origin = sample["Input"]
                 origin = origin.float().to(self.device)
                 target = sample["Target"].float().to(self.device)
                 target_chunks = torch.chunk(target, self.rollout_times, dim=1)
@@ -105,13 +109,13 @@ class ImaeTrainer(Trainer, Evaluator):
                     for metric, loss_fn in self.loss_functions.items():
                         loss = loss_fn(output, chunk)
                         self.running_losses[metric][j] += loss.item()
-
-                if i == 1:
-                    self.plot(epoch, origin_before_masked, origin_plot,
-                              output_chunks, target_chunks,
-                              self.config['valid']['rollout_times'],
-                              self.config['seq_length'],
-                              self.config['imae']['save_reconstruct'])
+                if self.args.mask_flag:
+                    if i == 1:
+                        self.plot(epoch, origin_before_masked, origin_plot,
+                                output_chunks, target_chunks,
+                                self.config['valid']['rollout_times'],
+                                self.config['seq_length'],
+                                self.config['imae']['save_reconstruct'])
 
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():

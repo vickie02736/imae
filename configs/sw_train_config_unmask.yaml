@@ -1,0 +1,66 @@
+database: shallow_water
+image_size: 128
+channels: 3
+seq_length: 10
+mask_method: "zeros"
+
+imae: 
+  num_layers: 6
+  nhead: 6
+  patch_size: 16
+  save_loss: '../data/shallow_water/unmask/imae/loss/'
+  save_checkpoint: '../data/shallow_water/unmask/imae/ckpt/'
+  save_reconstruct: '../data/shallow_water/unmask/imae/rec/'
+  batch_size: 32
+
+convlstm:
+  hidden_dim: [32, 32]
+  kernel_size: [3, 3]
+  num_layers: 2
+  save_loss: '../data/shallow_water/unmask/convlstm/loss/'
+  save_checkpoint: '../data/shallow_water/unmask/convlstm/ckpt/'
+  save_reconstruct: '../data/shallow_water/unmask/convlstm/rec/'
+  batch_size: 32
+
+cae:
+  latent_dim: 128
+  save_checkpoint: '../data/shallow_water/cae/ckpt/'
+  batch_size: 32
+
+cae_lstm: 
+  cae_load_epoch: 600
+  hidden_dim: 1280
+  save_loss: '../data/shallow_water/unmask/caelstm/loss/'
+  save_checkpoint: '../data/shallow_water/unmask/caelstm/ckpt/'
+  save_reconstruct: '../data/shallow_water/unmask/caelstm/rec/'
+  batch_size: 16
+
+train:
+  loss_fn: "MSE"
+  optimizer: "AdamW"
+  scheduler: "CosineAnnealingLR"
+  learning_rate: 0.0001
+  rollout_times: 2
+ 
+valid: 
+  rollout_times: 2
+  metric: 
+    - "MSE"
+    - "RMSE"
+    - "MAE" 
+    - "SSIM" 
+    - "PSNR"
+  
+test:
+  dataset: 
+    - inner100
+    - outer100
+    - inner200
+    - outer200
+  rollout_times: 2
+  metric: 
+    - "MSE"
+    - "RMSE"
+    - "MAE" 
+    - "SSIM" 
+    - "PSNR"

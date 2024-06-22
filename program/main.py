@@ -10,7 +10,7 @@ import numpy as np
 from tqdm import tqdm
 import torch
 import torch.distributed as dist
-from program.utils.tools import int_or_string
+from utils import int_or_string, str2bool
 
 SEED = 3409
 random.seed(SEED)
@@ -54,11 +54,12 @@ def get_args_parser():
                              default=200,
                              help='Number of epochs')
     train_group.add_argument('--save-frequency', type=int, default=20, help='Save once after how many epochs of training')
+    train_group.add_argument('--mask-flag', type=str2bool, default=True, help='Mask flag')
 
     test_group = parser.add_argument_group()
     test_group.add_argument(
         '--task',
-        choices=['inner', 'outer', 'inner_rollout', 'outer_rollout'],
+        choices=['basic', 'outer', 'basic_rollout', 'outer_rollout'],
         default='inner',
         help='Task type')
     test_group.add_argument('--mask-ratio',
@@ -86,12 +87,13 @@ def main():
 
     # load config
     if args.database == 'shallow_water':
-        config = yaml.load(open("../configs/sw_train_config.yaml", "r"), Loader=yaml.FullLoader)
         data_config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
-
+        if args.mask_flag:
+            config = yaml.load(open("../configs/sw_train_config.yaml", "r"), Loader=yaml.FullLoader)
+        else:
+            config = yaml.load(open("../configs/sw_train_config_unmask.yaml", "r"), Loader=yaml.FullLoader)
     elif args.database == 'moving_mnist':
         config = yaml.load(open("../configs/mm_train_config.yaml", "r"), Loader=yaml.FullLoader)
-        # data_config = yaml.load(open("../database/moving_mnist/config.yaml", "r"), Loader=yaml.FullLoader)
     else:
         pass
 

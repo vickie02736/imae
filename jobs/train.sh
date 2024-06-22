@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N cae_lstm
+#$ -N um_convlstm
 #$ -l h_rt=36:00:0
 #$ -l mem=10G
 #$ -l gpu=1
@@ -10,11 +10,11 @@
 
 #$ -cwd
 
-echo "This script is running on "
-hostname
+# echo "This script is running on "
+# hostname
 
-echo "GPU information" 
-nvidia-smi
+# echo "GPU information" 
+# nvidia-smi
 
 source /home/uceckz0/miniconda3/bin/activate
 conda activate imae
@@ -24,9 +24,9 @@ torchrun --nnodes=1 --nproc_per_node=1 ../program/main.py\
         --epochs 600\
         --resume-epoch 1\
         --database shallow_water\
-        --save-frequency 2\
-        --model-name cae_lstm\
-        --interpolation linear
+        --save-frequency 20\
+        --model-name convlstm\
+        --mask-flag false
 echo $(date +%d-%m-%Y_%H:%M:%S)
 
 # model name: imae, convlstm, cae, cae_lstm 

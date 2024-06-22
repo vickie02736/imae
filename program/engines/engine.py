@@ -20,8 +20,11 @@ class Engine:
 
     def load_config(self): 
         if self.args.database == 'shallow_water':
-            self.config = yaml.load(open("../configs/sw_train_config.yaml", "r"), Loader=yaml.FullLoader)
-            self.data_config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
+            # self.data_config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
+            if self.args.mask_flag:
+                self.config = yaml.load(open("../configs/sw_train_config.yaml", "r"), Loader=yaml.FullLoader)
+            else:
+                self.config = yaml.load(open("../configs/sw_train_config_unmask.yaml", "r"), Loader=yaml.FullLoader)
         elif self.args.database == 'moving_mnist':
             self.config = yaml.load(open("../configs/mm_train_config.yaml", "r"), Loader=yaml.FullLoader)
         else:

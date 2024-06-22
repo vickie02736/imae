@@ -12,6 +12,16 @@ def int_or_string(value):
     else:
         return int(value)
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 
 def save_losses(epoch, loss_data, save_path):
     with open(os.path.join(save_path), 'r') as f:
