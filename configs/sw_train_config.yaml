@@ -30,7 +30,7 @@ cae:
   batch_size: 32
 
 cae_lstm: 
-  cae_load_epoch: 2
+  cae_load_epoch: 600
   hidden_dim: 1280
   save_loss: '../data/shallow_water/caelstm/loss/'
   save_checkpoint: '../data/shallow_water/caelstm/ckpt/'

@@ -67,7 +67,7 @@ class CaeTrainer(Trainer, Evaluator):
                 origin_plot = copy.deepcopy(sample["Input"])
                 origin = sample["Input"].float().to(self.device)
                 target = sample["Input"].float().to(self.device)
-                output = self.model(origin, sequence_input=True)
+                output = self.model(origin)
 
                 if i == 1:
                     save_path = os.path.join(
@@ -170,7 +170,6 @@ class CaeLstmTrainer(Trainer, Evaluator):
         total_rollout_loss = 0.0
 
         for i, sample in enumerate(self.train_loader):
-            print(f"Epoch {epoch}, batch {i}")
             origin, idx = mask(sample["Input"],
                                mask_mtd=self.config["mask_method"])
             # origin = self.interpolation_fn(origin, idx)
@@ -226,7 +225,6 @@ class CaeLstmTrainer(Trainer, Evaluator):
         self.model.eval()
         with torch.no_grad():
             for i, sample in enumerate(self.eval_loader):
-                print(f"Epoch {epoch}, valid batch {i}")
                 origin_before_masked = copy.deepcopy(sample["Input"]) 
                 origin, idx = mask(sample["Input"], 
                                           mask_mtd=self.config["mask_method"]) 
