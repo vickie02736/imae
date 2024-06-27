@@ -1,16 +1,41 @@
 database: moving_mnist
 image_size: 64
 channels: 1
-
-batch_size: 128
-patch_size: 8
 seq_length: 5
 mask_method: "random"
-save_loss: '/home/uceckz0/Project/imae/data/moving_mnist/imae/loss/'
 
-model: 
-  num_layers: 5
-  nhead: 8
+imae: 
+  num_layers: 2
+  nhead: 4
+  patch_size: 8
+  save_loss: '../data/moving_mnist/imae/loss/'
+  save_checkpoint: '../data/moving_mnist/imae/ckpt/'
+  save_reconstruct: '../data/moving_mnist/imae/rec/'
+  batch_size: 32
+
+convlstm:
+  hidden_dim: [32, 32]
+  kernel_size: [3, 3]
+  num_layers: 2
+  save_loss: '../data/moving_mnist/convlstm/loss/'
+  save_checkpoint: '../data/moving_mnist/convlstm/ckpt/'
+  save_reconstruct: '../data/moving_mnist/convlstm/rec/'
+  batch_size: 32
+
+cae:
+  latent_dim: 128
+  save_loss: '../data/moving_mnist/cae/loss/'
+  save_checkpoint: '../data/moving_mnist/cae/ckpt/'
+  save_reconstruct: '../data/moving_mnist/cae/rec/'
+  batch_size: 32
+
+cae_lstm: 
+  cae_load_epoch: 600
+  hidden_dim: 1280
+  save_loss: '../data/moving_mnist/caelstm/loss/'
+  save_checkpoint: '../data/moving_mnist/caelstm/ckpt/'
+  save_reconstruct: '../data/moving_mnist/caelstm/rec/'
+  batch_size: 16
 
 train:
   loss_fn: "BCE"
@@ -18,7 +43,6 @@ train:
   scheduler: "StepLR"
   learning_rate: 0.0001
   rollout_times: 2
-  save_checkpoint: '../data/moving_mnist/imae/ckpt/'
   
 
 
@@ -26,21 +50,6 @@ valid:
   rollout_times: 2
   metric: 
     - "BCE"
-    - "MSE"
-    - "RMSE"
-    - "MAE" 
-    - "SSIM" 
-    - "PSNR"
-  save_reconstruct: '../data/moving_mnist/imae/rec/'
-  
-test:
-  dataset: 
-    - inner100
-    - outer100
-    - inner200
-    - outer200
-  rollout_times: 2
-  metric: 
     - "MSE"
     - "RMSE"
     - "MAE" 

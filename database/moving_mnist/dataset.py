@@ -10,11 +10,10 @@ sys.path.append("..")
 
 class seq_DataBuilder(Dataset):
 
-    def __init__(self,
+    def __init__(self, dataset,
                  input_length,
                  rollout_times,
-                 dataset,
-                 train_ratio=0.8,
+                 inner = True, 
                  transform=None):
         '''
         input_length: the length of input
@@ -22,48 +21,28 @@ class seq_DataBuilder(Dataset):
         dataset: train valid test
         '''
 
-        list = np.load('../database/moving_mnist/data/mnist_test_seq.npy',
-                       allow_pickle=True)
-        transposed_list = np.transpose(list, (1, 0, 2, 3))
-
         self.input_length = input_length
         self.rollout_times = rollout_times
         self.total_length = input_length * (rollout_times + 1)
-
-        test_size = 1 - train_ratio
-
-        train_data, temp_data = train_test_split(transposed_list,
-                                                 test_size=test_size,
-                                                 random_state=42)
-        valid_data, test_data = train_test_split(temp_data,
-                                                 test_size=0.5,
-                                                 random_state=42)
 
         ### calculate min max for normalization
         self.min = np.min(train_data)
         self.max = np.max(train_data)
 
-        all_clips = []
+        self.all_clips = []
         if dataset == 'train':
-            for i in range(len(train_data)):
-                each_sequence = train_data[i]
-                clips = self.cut_clips(each_sequence)
-                all_clips.extend(clips)
-            self.all_clips = all_clips
+            list = np.load('../database/moving_mnist/data/train_data.npy', allow_pickle=True)
         elif dataset == 'valid':
-            for i in range(len(valid_data)):
-                each_sequence = valid_data[i]
-                clips = self.cut_clips(each_sequence)
-                all_clips.extend(clips)
-            self.all_clips = all_clips
+            list = np.load('../database/moving_mnist/data/val_data.npy', allow_pickle=True)
         elif dataset == 'test':
-            for i in range(len(test_data)):
-                each_sequence = test_data[i]
-                clips = self.cut_clips(each_sequence)
-                all_clips.extend(clips)
-            self.all_clips = all_clips
+            list = np.load('../database/moving_mnist/data/test_data.npy', allow_pickle=True)
         else:
             pass
+
+        for i in range(len(list)):
+            each_sequence = list[i]
+            clips = self.cut_clips(each_sequence)
+            self.all_clips.extend(clips)
 
     def __len__(self):
         return len(self.all_clips)
@@ -94,3 +73,9 @@ class seq_DataBuilder(Dataset):
     def normalize(self, arr, mins, maxs):
         normalized_arr = (arr - mins) / (maxs - mins)
         return normalized_arr
+
+
+class fra_DataBuilder(Dataset):
+    def __init__(self, dataset, transform=None):
+        list = np.load('../database/moving_mnist/data/mnist_test_seq.npy',
+                       allow_pickle=True)

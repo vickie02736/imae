@@ -1,2 +1,10 @@
 channels: 1
 image_size: 64
+
+train_file:
+
+
+valid_file:
+
+
+test_file:
