@@ -102,7 +102,7 @@ class ConvLSTM(nn.Module):
                  return_all_layers=False):
         super(ConvLSTM, self).__init__()
 
-        input_dim = config['image_size'][0]
+        input_dim = config['channels']
         hidden_dim = config['convlstm']['hidden_dim']
         kernel_size = tuple(config['convlstm']['kernel_size'])
         num_layers = config['convlstm']['num_layers']
@@ -219,8 +219,13 @@ class ConvLSTM(nn.Module):
 
 
 # import yaml
-# config = yaml.load(open("/home/uceckz0/Project/imae/configs/example_config.yaml", "r"), Loader=yaml.FullLoader)
-# model = ConvLSTM(config)
-# x = torch.randn(2, 10, 3, 64, 128)
+# config = yaml.load(open("/home/uceckz0/Project/imae/configs/sw_train_config.yaml", "r"), Loader=yaml.FullLoader)
+# model = ConvLSTM(
+#     input_dim=config['channels'],
+#     hidden_dim=config['convlstm']['hidden_dim'],
+#     kernel_size=tuple(config['convlstm']['kernel_size']),
+#     num_layers=config['convlstm']['num_layers'],
+# )
+# x = torch.randn(2, 10, 3, 128, 128)
 # y = model(x)
 # print(y.shape)

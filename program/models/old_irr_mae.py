@@ -9,16 +9,15 @@ class VisionTransformer(nn.Module):
         super().__init__()
 
         self.database = config['database']
-        self.channel_num, self.image_h, self.image_w = config['image_size']
-        self.patch_h, self.patch_w = config['imae']['patch_size']
+        self.channel_num = config['channels']
+        self.image_len = config['image_size']
+        self.patch_len = config['imae']['patch_size']
         self.num_layers = config['imae']['num_layers']
         self.nhead = config['imae']['nhead']
 
-        # self.side_patch_num = self.image_len // self.patch_len
-        self.patch_num_h = self.image_h // self.patch_h
-        self.patch_num_w = self.image_w // self.patch_w
-        self.patch_embedding_num = self.patch_num_h * self.patch_num_w
-        self.patch_embedding_len = self.channel_num * self.patch_h * self.patch_w
+        self.side_patch_num = self.image_len // self.patch_len
+        self.patch_embedding_num = self.side_patch_num**2
+        self.patch_embedding_len = self.channel_num * self.patch_len * self.patch_len
 
         self.start_embedding = nn.Parameter(
             torch.zeros(1, self.patch_embedding_len))
@@ -28,8 +27,8 @@ class VisionTransformer(nn.Module):
             torch.randn(self.patch_embedding_num + 2,
                         self.patch_embedding_len)) * 0.02
 
-        self.random_tensor = torch.randn(self.channel_num, self.image_h,
-                                         self.image_w)  # for random masking
+        self.random_tensor = torch.randn(self.channel_num, self.image_len,
+                                         self.image_len)  # for random masking
 
         transform_layer = nn.TransformerEncoderLayer(
             d_model=self.patch_embedding_len,
@@ -90,17 +89,18 @@ class VisionTransformer(nn.Module):
         return x
 
     def patchify(self, x):
-        x = x.unfold(1, self.patch_h, self.patch_w).unfold(2, self.patch_h, self.patch_w)
+        x = x.unfold(1, self.patch_len,
+                     self.patch_len).unfold(2, self.patch_len, self.patch_len)
         x = x.permute(1, 2, 0, 3, 4)
-        x = x.reshape(-1, self.channel_num, self.patch_h, self.patch_w)
+        x = x.reshape(-1, self.channel_num, self.patch_len, self.patch_len)
         x = x.reshape(self.patch_embedding_num, -1)
         return x
 
     def unpatchify(self, x):
-        x = x.view(self.patch_num_h, self.patch_num_w, self.channel_num,
-                   self.patch_h, self.patch_w)
-        x = x.permute(2, 0, 3, 1, 4).reshape(self.channel_num, self.image_h,
-                                             self.image_w)
+        x = x.view(self.side_patch_num, self.side_patch_num, self.channel_num,
+                   self.patch_len, self.patch_len)
+        x = x.permute(2, 0, 3, 1, 4).reshape(self.channel_num, self.image_len,
+                                             self.image_len)
         return x
 
     def encoder(self, x):
@@ -122,11 +122,3 @@ class VisionTransformer(nn.Module):
 
         x = self.seq_unpatchify(x)
         return x
-
-
-import yaml
-config = yaml.load(open("/home/uceckz0/Project/imae/configs/example_config.yaml", "r"), Loader=yaml.FullLoader)
-model = VisionTransformer(config)
-x = torch.randn(2, 10, 3, 64, 128)
-y = model(x)
-print(y.shape)

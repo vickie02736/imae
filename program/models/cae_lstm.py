@@ -1,140 +1,68 @@
 import torch
 import torch.nn as nn
 
-
-
 class ConvAutoencoder(nn.Module):
-
     def __init__(self, config):
         super(ConvAutoencoder, self).__init__()
-
-        self.latent_dim = config['cae']['latent_dim']
-        input_channels = config['channels']
-
-        #initialize encoder and decoder
+        input_channels, image_height, image_width = config['image_size'] 
+        latent_dim = config['cae']['latent_dim']
+        
+        # Encoder
         self.encode = nn.Sequential(
-            nn.Conv2d(input_channels, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
-            nn.GELU(),
-            nn.MaxPool2d(kernel_size=2,
-                         stride=2),  # Downsamples to 64x64 if input is 128x128
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(128),
-            nn.GELU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # Downsamples to 32x32
-            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(256),
-            nn.GELU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # Downsamples to 16x16
-            nn.Conv2d(256, 512, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(512),
-            nn.GELU(),  # Downsamples to 8x8
-            nn.Conv2d(512, 1024, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(1024),
-            nn.GELU(),  # Downsamples to 4x4
-            nn.Conv2d(1024,
-                      self.latent_dim,
-                      kernel_size=4,
-                      stride=1,
-                      padding=0),  # Downsamples to 1x1
-            nn.BatchNorm2d(self.latent_dim),
-            nn.GELU())
+            nn.Conv2d(input_channels, 16, kernel_size=3, stride=2, padding=1),  # (batch, C, H, W) -> (batch, 16, H/2, W/2)
+            nn.ReLU(True),
+            nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1), # (batch, 16, H/2, W/2) -> (batch, 32, H/4, W/4)
+            nn.ReLU(True),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1), # (batch, 32, H/4, W/4) -> (batch, 64, H/8, W/8)
+            nn.ReLU(True),
+            nn.Flatten()                                           # (batch, 64, H/8, W/8) -> (batch, 64*H/8*W/8)
+        )
+        
+        self.fc1 = nn.Linear(64 * (image_height // 8) * (image_width // 8), latent_dim)  # (batch, 64*H/8*W/8) -> (batch, latent_dim)
+        
+        self.fc2 = nn.Linear(latent_dim, 64 * (image_height // 8) * (image_width // 8))  # (batch, latent_dim) -> (batch, 64*H/8*W/8)
+        
+        # Decoder
         self.decode = nn.Sequential(
-            nn.ConvTranspose2d(self.latent_dim,
-                               1024,
-                               kernel_size=4,
-                               stride=1,
-                               padding=0),  # Upscales to 4x4
-            nn.BatchNorm2d(1024),
-            nn.GELU(),
-            nn.ConvTranspose2d(1024,
-                               512,
-                               kernel_size=3,
-                               stride=2,
-                               padding=1,
-                               output_padding=1),  # Upscales to 8x8
-            nn.BatchNorm2d(512),
-            nn.GELU(),
-            nn.ConvTranspose2d(512,
-                               256,
-                               kernel_size=3,
-                               stride=2,
-                               padding=1,
-                               output_padding=1),  # Upscales to 16x16
-            nn.BatchNorm2d(256),
-            nn.GELU(),
-            nn.ConvTranspose2d(256,
-                               128,
-                               kernel_size=3,
-                               stride=2,
-                               padding=1,
-                               output_padding=1),  # Upscales to 32x32
-            nn.BatchNorm2d(128),
-            nn.GELU(),
-            nn.ConvTranspose2d(128,
-                               64,
-                               kernel_size=3,
-                               stride=2,
-                               padding=1,
-                               output_padding=1),  # Upscales to 64x64
-            nn.BatchNorm2d(64),
-            nn.GELU(),
-            nn.ConvTranspose2d(64,
-                               input_channels,
-                               kernel_size=3,
-                               stride=2,
-                               padding=1,
-                               output_padding=1),  # Upscales to 128x128
+            nn.Unflatten(1, (64, image_height // 8, image_width // 8)),          # (batch, 64*H/8*W/8) -> (batch, 64, H/8, W/8)
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1), # (batch, 64, H/8, W/8) -> (batch, 32, H/4, W/4)
+            nn.ReLU(True),
+            nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=1), # (batch, 32, H/4, W/4) -> (batch, 16, H/2, W/2)
+            nn.ReLU(True),
+            nn.ConvTranspose2d(16, input_channels, kernel_size=3, stride=2, padding=1, output_padding=1), # (batch, 16, H/2, W/2) -> (batch, C, H, W)
+            nn.Sigmoid()
         )
 
-        # Batch normalization for the encoder's output (latent code)
-        self.bn = nn.BatchNorm2d(self.latent_dim, affine=False)
-
     def forward(self, x):
-        # if x.dim() == 5:
-        #     batch_size, sequence_length, channels, height, width = x.shape
-        #     x = x.view(batch_size * sequence_length, channels, height, width)
-        #     x = self.encoder(x)
-        #     x = x.view(batch_size, sequence_length, -1)
-        #     x = self.decoder(x.view(batch_size * sequence_length, -1))
-        #     x = x.view(batch_size, sequence_length, channels, height, width)
-        # else:
         x = self.encoder(x)
+        print(x.shape)
         x = self.decoder(x)
         return x
 
-
     def encoder(self, x):
-        if x.dim() == 5:  # If input has sequence dimension
-            batch_size, sequence_length, channels, height, width = x.shape
-            x = x.view(batch_size * sequence_length, channels, height, width)
+        if x.dim() == 5:  # (batch_size, sequence_length, input_channels, image_height, image_width)
+            batch_size, sequence_length, _, _, _ = x.size()
+            x = x.view(batch_size * sequence_length, x.size(2), x.size(3), x.size(4))
             x = self.encode(x)
-            x = self.bn(x)
-            x = x.view(batch_size, sequence_length, -1)
-        else: 
+            x = self.fc1(x)
+            x = x.view(batch_size, sequence_length, -1)  # (batch_size, sequence_length, latent_dim)
+        else:  # (batch_size, input_channels, image_height, image_width)
             x = self.encode(x)
-            x = self.bn(x)
-            x = x.view(x.shape[0], -1)
+            x = self.fc1(x)  # (batch_size, latent_dim)
         return x
 
     def decoder(self, x):
-        if x.dim() == 3:  # If input has sequence dimension
-            batch_size, sequence_length, _ = x.shape
-            x = x.view(batch_size * sequence_length, self.latent_dim, 1, 1)
+        if x.dim() == 3:  # (batch_size, sequence_length, latent_dim)
+            batch_size, sequence_length, _ = x.size()
+            x = x.view(batch_size * sequence_length, -1)
+            x = self.fc2(x)
             x = self.decode(x)
-            x = x.view(batch_size, sequence_length, *x.shape[1:])
-        else:  
-            x = x.view(x.shape[0], self.latent_dim, 1, 1)
-            x = self.decode(x)
+            x = x.view(batch_size, sequence_length, x.size(1), x.size(2), x.size(3))  # (batch_size, sequence_length, C, H, W)
+        else:  # (batch_size, latent_dim)
+            x = self.fc2(x)
+            x = self.decode(x)  # (batch_size, input_channels, image_height, image_width)
         return x
 
-
-# model = ConvAutoencoder(latent_dim=64, input_channels=3)
-# x = torch.randn(2, 3, 128, 128)
-# latent = model.encoder(x)
-# y = model.decoder(latent)
-# print(latent.shape, y.shape)
-# print(y['latent_code'].shape, y['x_hat'].shape)
 
 
 class LSTMPredictor(nn.Module):
@@ -163,9 +91,3 @@ class LSTMPredictor(nn.Module):
         # out: (batch_size, latent_dim_AE, hidden_size)
         out = out.reshape(batch_size, fragment_length, latent_dim_AE)
         return out
-
-
-# x = torch.randn(2, 10, 64)
-# model = LSTMPredictor(input_size=64, hidden_size=640)
-# y = model(x)
-# print(y.shape)

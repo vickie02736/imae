@@ -1,5 +1,5 @@
 database: shallow_water
-image_size: 128
+image_size: [3, 128, 128]
 channels: 3
 seq_length: 10
 mask_method: "zeros"
@@ -7,7 +7,7 @@ mask_method: "zeros"
 imae: 
   num_layers: 6
   nhead: 6
-  patch_size: 16
+  patch_size: [16, 16]
   save_loss: '../data/shallow_water/imae/loss/'
   save_checkpoint: '../data/shallow_water/imae/ckpt/'
   save_reconstruct: '../data/shallow_water/imae/rec/'

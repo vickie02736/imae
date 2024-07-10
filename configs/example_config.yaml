@@ -1,0 +1,26 @@
+database: shallow_water
+image_size: [3, 64, 128]
+channels: 3
+seq_length: 10
+mask_method: "zeros"
+
+imae: 
+  num_layers: 6
+  nhead: 6
+  patch_size: [16, 16]
+  batch_size: 32
+
+convlstm:
+  hidden_dim: [32, 32]
+  kernel_size: [3, 3]
+  num_layers: 2
+  batch_size: 32
+
+cae:
+  latent_dim: 128
+  batch_size: 32
+
+cae_lstm: 
+  cae_load_epoch: 600
+  hidden_dim: 1280
+  batch_size: 16
