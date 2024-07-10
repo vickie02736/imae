@@ -114,12 +114,10 @@ def main():
                                             timestep=100)
     elif args.database == 'moving_mnist':
         from database.moving_mnist.dataset import seq_DataBuilder
-        train_dataset = seq_DataBuilder(config['seq_length'],
-                                        config['train']['rollout_times'],
-                                        'train')
-        valid_dataset = seq_DataBuilder(config['seq_length'],
-                                        config['valid']['rollout_times'],
-                                        'valid')
+        train_dataset = seq_DataBuilder('train', config['seq_length'],
+                                        config['train']['rollout_times'])
+        valid_dataset = seq_DataBuilder('valid', config['seq_length'],
+                                        config['valid']['rollout_times'])
     else:
         pass
 

@@ -26,12 +26,14 @@ class seq_DataBuilder(Dataset):
         self.total_length = input_length * (rollout_times + 1)
 
         ### calculate min max for normalization
+        train_data = np.load('../database/moving_mnist/data/train_data.npy', allow_pickle=True)
+
         self.min = np.min(train_data)
         self.max = np.max(train_data)
 
         self.all_clips = []
         if dataset == 'train':
-            list = np.load('../database/moving_mnist/data/train_data.npy', allow_pickle=True)
+            list = train_data
         elif dataset == 'valid':
             list = np.load('../database/moving_mnist/data/val_data.npy', allow_pickle=True)
         elif dataset == 'test':
@@ -53,20 +55,18 @@ class seq_DataBuilder(Dataset):
         input_sequence = clip[0:self.input_length]
         input_sequence = self.normalize(input_sequence, self.min, self.max)
         input_sequence = torch.tensor(input_sequence, dtype=torch.float32)
-        input_sequence = input_sequence.unsqueeze(1)  # add channel dimension
 
         target_sequence = clip[self.input_length:self.total_length]
         target_sequence = self.normalize(target_sequence, self.min, self.max)
         target_sequence = torch.tensor(target_sequence, dtype=torch.float32)
-        target_sequence = target_sequence.unsqueeze(1)
 
         return {"Input": input_sequence, "Target": target_sequence}
 
-    def cut_clips(self, sorted_df):
+    def cut_clips(self, sorted_list):
         clips = []
-        for start in range(len(sorted_df) - self.total_length + 1):
+        for start in range(len(sorted_list) - self.total_length + 1):
             end = start + self.total_length
-            clip = sorted_df[start:end]
+            clip = sorted_list[start:end]
             clips.append(clip)
         return clips  # all clips from the same sequence
 
@@ -75,7 +75,19 @@ class seq_DataBuilder(Dataset):
         return normalized_arr
 
 
-class fra_DataBuilder(Dataset):
-    def __init__(self, dataset, transform=None):
-        list = np.load('../database/moving_mnist/data/mnist_test_seq.npy',
-                       allow_pickle=True)
+# class fra_DataBuilder(Dataset):
+#     def __init__(self, dataset, transform=None):
+#         list = np.load('../database/moving_mnist/data/mnist_test_seq.npy',
+#                        allow_pickle=True)
+
+
+
+
+# dataset = seq_DataBuilder("train", 5, 1)
+
+# from torch.utils.data import DataLoader
+# dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
+
+# for i, data in enumerate(dataloader):
+#     print(data["Input"].shape)
+#     break
