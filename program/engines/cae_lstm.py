@@ -11,9 +11,9 @@ from .evaluator import Evaluator
 from utils import save_losses, mask
 
 class CaeTrainer(Trainer, Evaluator):
-    def __init__(self, rank, args, train_dataset, eval_dataset):
-        Trainer.__init__(self, rank, args, train_dataset)
-        Evaluator.__init__(self, rank, args, eval_dataset)
+    def __init__(self, rank, args):
+        Trainer.__init__(self, rank, args)
+        Evaluator.__init__(self, rank, args)
         self.load_model()   # Here
         self.setup()        # Engine
         self.init_training_components() # Trainer
@@ -62,7 +62,6 @@ class CaeTrainer(Trainer, Evaluator):
     def evaluate_epoch(self, epoch):
         self.model.eval()
         with torch.no_grad():
-
              for i, sample in enumerate(self.eval_loader):
                 origin_plot = copy.deepcopy(sample["Input"])
                 origin = sample["Input"].float().to(self.device)
@@ -132,11 +131,9 @@ class CaeLstmTrainer(Trainer, Evaluator):
 
     def __init__(self,
                  rank,
-                 args,
-                 train_dataset,
-                 eval_dataset):
-        Trainer.__init__(self, rank, args, train_dataset)
-        Evaluator.__init__(self, rank, args, eval_dataset)
+                 args):
+        Trainer.__init__(self, rank, args)
+        Evaluator.__init__(self, rank, args)
         self.load_cae()
         self.load_model()
         self.setup()

@@ -124,9 +124,9 @@ class VisionTransformer(nn.Module):
         return x
 
 
-import yaml
-config = yaml.load(open("/home/uceckz0/Project/imae/configs/example_config.yaml", "r"), Loader=yaml.FullLoader)
-model = VisionTransformer(config)
-x = torch.randn(2, 10, 3, 64, 128)
-y = model(x)
-print(y.shape)
+# import yaml
+# config = yaml.load(open("/home/uceckz0/Project/imae/configs/example_config.yaml", "r"), Loader=yaml.FullLoader)
+# model = VisionTransformer(config)
+# x = torch.randn(2, 10, 3, 64, 128)
+# y = model(x)
+# print(y.shape)

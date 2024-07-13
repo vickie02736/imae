@@ -12,17 +12,14 @@ from utils import save_losses, mask
 
 class ImaeTrainer(Trainer, Evaluator):
 
-    def __init__(self,
-                 rank,
-                 args,
-                 train_dataset,
-                 eval_dataset):
-        Trainer.__init__(self, rank, args, train_dataset)
-        Evaluator.__init__(self, rank, args, eval_dataset)
+    def __init__(self, rank, args):
+        Trainer.__init__(self, rank, args)
+        Evaluator.__init__(self, rank, args)
         self.load_model()   # Here
         self.setup()        # Engine
+        self.load_checkpoint()
+        # Trainer.load_checkpoint(self)
         self.init_training_components() # Trainer
-        Trainer.load_checkpoint(self)
 
     def load_model(self):
         self.model = VisionTransformer(self.config)
@@ -180,3 +177,51 @@ class ImaeTrainer(Trainer, Evaluator):
         plt.tight_layout()
         plt.savefig(os.path.join(save_path, f"{idx}.png"))
         plt.close()
+
+
+
+
+class ImaeTester(Evaluator):
+
+    def __init__(self,
+                 rank,
+                 args,
+                 eval_dataset):
+        Evaluator.__init__(self, rank, args, eval_dataset)
+        self.load_model()
+        self.setup()
+        self.load_checkpoint()
+
+    def load_model(self):
+        self.model = VisionTransformer(self.config)
+
+    def evaluate(self, mask_ratio, rollout_times):
+        self.model.eval()
+        with torch.no_grad():
+            for i, sample in enumerate(self.eval_loader):
+                origin_before_masked = copy.deepcopy(sample["Input"])
+                origin, _ = mask(sample["Input"], mask_mtd='zeros', test_flag=True, mask_ratio=mask_ratio)
+                origin = origin.float().to(self.device)
+                target = sample["Target"].float().to(self.device)
+                target_chunks = torch.chunk(target, rollout_times, dim=1)
+
+                output_chunks = []
+                for j, chunk in enumerate(target_chunks):
+                    if j == 0:
+                        output = self.model(origin)
+                    else:
+                        output = self.model(output)
+                    output_chunks.append(output)
+                    # Compute losses
+                    for metric, loss_fn in self.loss_functions.items():
+                        loss = loss_fn(output, chunk)
+                        self.running_losses[metric][j] += loss.item()
+
+            chunk_losses = {}
+            for metric, running_loss_list in self.running_losses.items():
+                total_loss = sum(running_loss_list)
+                average_loss = total_loss / len(self.eval_loader.dataset)
+                chunk_losses[metric] = average_loss
+            save_losses(
+                chunk_losses,
+                os.path.join(self.config['imae']['save_loss'], f'test_loss_{mask_ratio}.json'))

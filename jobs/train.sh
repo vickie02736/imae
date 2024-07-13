@@ -23,7 +23,7 @@ echo $(date +%d-%m-%Y_%H:%M:%S)
 torchrun --nnodes=1 --nproc_per_node=1 ../program/main.py\
         --epochs 600\
         --resume-epoch 1\
-        --database moving_mnist\
+        --database shallow_water\
         --save-frequency 20\
         --model-name convlstm\
         --interpolation linear

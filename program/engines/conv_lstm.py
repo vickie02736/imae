@@ -14,11 +14,9 @@ class ConvLstmTrainer(Trainer, Evaluator):
 
     def __init__(self,
                  rank,
-                 args, 
-                 train_dataset,
-                 eval_dataset):
-        Trainer.__init__(self, rank, args, train_dataset)
-        Evaluator.__init__(self, rank, args, eval_dataset)
+                 args):
+        Trainer.__init__(self, rank, args)
+        Evaluator.__init__(self, rank, args)
         self.load_model()
         self.setup()
         self.init_training_components()

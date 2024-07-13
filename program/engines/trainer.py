@@ -5,26 +5,32 @@ import torch.nn as nn
 import torch.optim as optim
 from program.engines.engine import Engine
 from torch.utils.data import DataLoader, DistributedSampler
-
+from database.shallow_water.dataset import seq_DataBuilder, fra_DataBuilder
 
 class Trainer(Engine):
-    def __init__(self, rank, args, train_dataset):
+    def __init__(self, rank, args):
         Engine.__init__(self, rank, args)
-        self.train_dataset = train_dataset
         self.init_train_dataloader()
         self.init_loss_function()
 
     def init_train_dataloader(self):
-        sampler = DistributedSampler(self.train_dataset,
+        if self.args.model_name == 'cae':
+            dataset = fra_DataBuilder(self.data_config['train_file'], timestep=100)
+        else:
+            dataset = seq_DataBuilder(self.data_config['train_file'],
+                                            self.config['seq_length'],
+                                            self.config['train']['rollout_times'],
+                                            timestep=100)
+        sampler = DistributedSampler(dataset,
                                      num_replicas=self.world_size,
                                      rank=self.rank)
-        self.train_loader = DataLoader(self.train_dataset,
+        self.train_loader = DataLoader(dataset,
                                 batch_size=self.config[self.args.model_name]['batch_size'],
                                 pin_memory=True,
                                 shuffle=False,
                                 drop_last=True,
                                 sampler=sampler)
-        self.len_dataset = len(self.train_dataset)
+        self.len_dataset = len(dataset)
 
     def init_training_components(self):
         if self.config['train']['optimizer'] == 'AdamW':
@@ -55,6 +61,11 @@ class Trainer(Engine):
                                                        step_size=10,
                                                        gamma=0.1)
         self.scaler = torch.cuda.amp.GradScaler()
+
+        if self.args.resume_epoch != 1:
+            self.optimizer.load_state_dict(self.loaded_checkpoint['optimizer'])
+            self.scheduler.load_state_dict(self.loaded_checkpoint['scheduler'])
+            self.scaler.load_state_dict(self.loaded_checkpoint['scaler'])
 
     def init_loss_function(self):
         if self.config['train']['loss_fn'] == 'MSE':

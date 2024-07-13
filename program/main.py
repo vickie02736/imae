@@ -26,10 +26,10 @@ def get_args_parser():
     parser = argparse.ArgumentParser(
         description='Irregular time series forecasting')
 
-    parser.add_argument('--Train',
-                        type=bool,
-                        default=True,
-                        help='Train the model')
+    # parser.add_argument('--Train',
+    #                     type=bool,
+    #                     default=True,
+    #                     help='Train the model')
     parser.add_argument('--resume-epoch',
                         type=int_or_string,
                         default=1,
@@ -51,21 +51,21 @@ def get_args_parser():
     train_group = parser.add_argument_group()
     train_group.add_argument('--epochs',
                              type=int,
-                             default=200,
+                             default=2,
                              help='Number of epochs')
-    train_group.add_argument('--save-frequency', type=int, default=20, help='Save once after how many epochs of training')
+    train_group.add_argument('--save-frequency', type=int, default=2, help='Save once after how many epochs of training')
     train_group.add_argument('--mask-flag', type=str2bool, default=True, help='Mask flag')
 
     test_group = parser.add_argument_group()
-    test_group.add_argument(
-        '--task',
-        choices=['basic', 'outer', 'basic_rollout', 'outer_rollout'],
-        default='inner',
-        help='Task type')
-    test_group.add_argument('--mask-ratio',
-                            type=float,
-                            default=0.1,
-                            help='Mask ratio')
+    # test_group.add_argument(
+    #     '--task',
+    #     choices=['basic', 'outer', 'basic_rollout', 'outer_rollout'],
+    #     default='inner',
+    #     help='Task type')
+    # test_group.add_argument('--mask-ratio',
+    #                         type=float,
+    #                         default=0.1,
+    #                         help='Mask ratio')
     test_group.add_argument('--test-flag', type=bool, default=False, help='Test flag')
 
     return parser
@@ -86,57 +86,39 @@ def main():
     end_epoch = args.resume_epoch + args.epochs
 
     # load config
-    if args.database == 'shallow_water':
-        data_config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
-        if args.mask_flag:
-            config = yaml.load(open("../configs/sw_train_config.yaml", "r"), Loader=yaml.FullLoader)
-        else:
-            config = yaml.load(open("../configs/sw_train_config_unmask.yaml", "r"), Loader=yaml.FullLoader)
-    elif args.database == 'moving_mnist':
-        config = yaml.load(open("../configs/mm_train_config.yaml", "r"), Loader=yaml.FullLoader)
-    else:
-        pass
+    # data_config = yaml.load(open("../database/shallow_water/config.yaml", "r"), Loader=yaml.FullLoader)
+    # config = yaml.load(open("../configs/sw_train_config.yaml", "r"), Loader=yaml.FullLoader)
 
-    # load database
-    if args.database == 'shallow_water':        
-        from database.shallow_water.dataset import seq_DataBuilder, fra_DataBuilder
-        valid_dataset = seq_DataBuilder(data_config['valid_file'],
-                                        config['seq_length'],
-                                        config['valid']['rollout_times'],
-                                        timestep=100)
-        if args.model_name == 'cae':
-            train_dataset = fra_DataBuilder(data_config['train_file'],
-                                            timestep=100)
-        else:
-            train_dataset = seq_DataBuilder(data_config['train_file'],
-                                            config['seq_length'],
-                                            config['train']['rollout_times'],
-                                            timestep=100)
-    elif args.database == 'moving_mnist':
-        from database.moving_mnist.dataset import seq_DataBuilder
-        train_dataset = seq_DataBuilder('train', config['seq_length'],
-                                        config['train']['rollout_times'])
-        valid_dataset = seq_DataBuilder('valid', config['seq_length'],
-                                        config['valid']['rollout_times'])
-    else:
-        pass
+    # load database 
+    # from database.shallow_water.dataset import seq_DataBuilder, fra_DataBuilder
+    # valid_dataset = seq_DataBuilder(data_config['valid_file'],
+    #                                 config['seq_length'],
+    #                                 config['valid']['rollout_times'],
+    #                                 timestep=100)
+    # if args.model_name == 'cae':s
+    #     train_dataset = fra_DataBuilder(data_config['train_file'],
+    #                                     timestep=100)
+    # else:
+    #     train_dataset = seq_DataBuilder(data_config['train_file'],
+    #                                     config['seq_length'],
+    #                                     config['train']['rollout_times'],
+    #                                     timestep=100)
 
-
-    if args.model_name == 'imae':
+    if args.model_name == 'imae': 
         from engines import ImaeTrainer
-        engine = ImaeTrainer(rank, args, train_dataset, valid_dataset)
+        engine = ImaeTrainer(rank, args)
 
     elif args.model_name == 'convlstm':
         from engines import ConvLstmTrainer
-        engine = ConvLstmTrainer(rank, args, train_dataset, valid_dataset)
+        engine = ConvLstmTrainer(rank, args)
 
     elif args.model_name == 'cae':
         from engines import CaeTrainer
-        engine = CaeTrainer(rank, args, train_dataset, valid_dataset)
+        engine = CaeTrainer(rank, args)
 
     elif args.model_name == 'cae_lstm':
         from engines import CaeLstmTrainer
-        engine = CaeLstmTrainer(rank, args, train_dataset, valid_dataset)
+        engine = CaeLstmTrainer(rank, args)
 
     else:
         pass
@@ -145,6 +127,7 @@ def main():
                         desc="Epoch progress"):
         engine.train_epoch(epoch)
         engine.evaluate_epoch(epoch)
+
 
 if __name__ == "__main__":
     main()
