@@ -1,10 +1,7 @@
 import os
 import json
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from matplotlib import pyplot as plt
-
+import argparse
 
 def int_or_string(value):
     if value == "best":
@@ -12,12 +9,12 @@ def int_or_string(value):
     else:
         return int(value)
 
-def str2bool(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+def str2bool(value):
+    if isinstance(value, bool):
+        return value
+    if value.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    elif value.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')

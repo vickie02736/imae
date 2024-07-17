@@ -13,10 +13,9 @@ from utils import save_losses, mask
 class ConvLstmTrainer(Trainer, Evaluator):
 
     def __init__(self,
-                 rank,
                  args):
-        Trainer.__init__(self, rank, args)
-        Evaluator.__init__(self, rank, args)
+        Trainer.__init__(self, args)
+        Evaluator.__init__(self, args)
         self.load_model()
         self.setup()
         self.load_checkpoint()

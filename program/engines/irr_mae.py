@@ -6,19 +6,18 @@ from matplotlib import pyplot as plt
 
 from models import VisionTransformer
 from .trainer import Trainer
-from .evaluator import Evaluator
+from .evaluator import Evaluator, Tester
 from utils import save_losses, mask
 
 
 class ImaeTrainer(Trainer, Evaluator):
 
-    def __init__(self, rank, args):
-        Trainer.__init__(self, rank, args)
-        Evaluator.__init__(self, rank, args)
+    def __init__(self, args):
+        Trainer.__init__(self, args)
+        Evaluator.__init__(self, args)
         self.load_model()   # Here
         self.setup()        # Engine
         self.load_checkpoint()
-        # Trainer.load_checkpoint(self)
         self.init_training_components() # Trainer
 
     def load_model(self):
@@ -182,13 +181,10 @@ class ImaeTrainer(Trainer, Evaluator):
 
 
 
-class ImaeTester(Evaluator):
+class ImaeTester(Tester):
 
-    def __init__(self,
-                 rank,
-                 args,
-                 eval_dataset):
-        Evaluator.__init__(self, rank, args, eval_dataset)
+    def __init__(self, args):
+        Evaluator.__init__(self, args)
         self.load_model()
         self.setup()
         self.load_checkpoint()
@@ -196,15 +192,14 @@ class ImaeTester(Evaluator):
     def load_model(self):
         self.model = VisionTransformer(self.config)
 
-    def evaluate(self, mask_ratio, rollout_times):
+    def evaluate(self):
         self.model.eval()
         with torch.no_grad():
-            for i, sample in enumerate(self.eval_loader):
-                origin_before_masked = copy.deepcopy(sample["Input"])
-                origin, _ = mask(sample["Input"], mask_mtd='zeros', test_flag=True, mask_ratio=mask_ratio)
+            for _, sample in enumerate(self.eval_loader):
+                origin, _ = mask(sample["Input"], mask_mtd='zeros', test_flag=True, mask_ratio=self.args.mask_ratio)
                 origin = origin.float().to(self.device)
                 target = sample["Target"].float().to(self.device)
-                target_chunks = torch.chunk(target, rollout_times, dim=1)
+                target_chunks = torch.chunk(target, self.args.rollout_times, dim=1)
 
                 output_chunks = []
                 for j, chunk in enumerate(target_chunks):
@@ -217,12 +212,11 @@ class ImaeTester(Evaluator):
                     for metric, loss_fn in self.loss_functions.items():
                         loss = loss_fn(output, chunk)
                         self.running_losses[metric][j] += loss.item()
-
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():
-                total_loss = sum(running_loss_list)
-                average_loss = total_loss / len(self.eval_loader.dataset)
+                average_loss = [_ / len(self.eval_loader.dataset) for _ in running_loss_list]
+                # average_loss = running_loss_list / len(self.eval_loader.dataset)
                 chunk_losses[metric] = average_loss
-            save_losses(
-                chunk_losses,
-                os.path.join(self.config['imae']['save_loss'], f'test_loss_{mask_ratio}.json'))
+            loss_savepath = os.path.join(self.config['imae']['save_loss'], f'test_loss_{self.args.mask_ratio}.json')
+            with open(loss_savepath, 'w') as file:
+                json.dump(chunk_losses, file)

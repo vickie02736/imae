@@ -3,13 +3,13 @@ import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from program.engines.engine import Engine
+from .engine import Engine
 from torch.utils.data import DataLoader, DistributedSampler
 from database.shallow_water.dataset import seq_DataBuilder, fra_DataBuilder
 
 class Trainer(Engine):
-    def __init__(self, rank, args):
-        Engine.__init__(self, rank, args)
+    def __init__(self, args):
+        Engine.__init__(self, args)
         self.init_train_dataloader()
         self.init_loss_function()
 

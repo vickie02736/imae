@@ -1,3 +1,14 @@
+test:
+  filename: "inner_test_file"
+  rollout_times: 2
+  timestep: 100
+  metric: 
+    - "MSE"
+    - "RMSE"
+    - "MAE" 
+    - "SSIM" 
+    - "PSNR"
+
 database: shallow_water
 image_size: [3, 128, 128]
 channels: 3
@@ -53,16 +64,3 @@ valid:
     - "SSIM" 
     - "PSNR"
   
-test:
-  dataset: 
-    - inner100
-    - outer100
-    - inner200
-    - outer200
-  rollout_times: 2
-  metric: 
-    - "MSE"
-    - "RMSE"
-    - "MAE" 
-    - "SSIM" 
-    - "PSNR"

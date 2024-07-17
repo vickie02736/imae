@@ -11,9 +11,9 @@ from .evaluator import Evaluator
 from utils import save_losses, mask
 
 class CaeTrainer(Trainer, Evaluator):
-    def __init__(self, rank, args):
-        Trainer.__init__(self, rank, args)
-        Evaluator.__init__(self, rank, args)
+    def __init__(self,  args):
+        Trainer.__init__(self, args)
+        Evaluator.__init__(self, args)
         self.load_model()   # Here
         self.setup()        # Engine
         self.load_checkpoint()
@@ -131,10 +131,9 @@ class CaeTrainer(Trainer, Evaluator):
 class CaeLstmTrainer(Trainer, Evaluator):
 
     def __init__(self,
-                 rank,
                  args):
-        Trainer.__init__(self, rank, args)
-        Evaluator.__init__(self, rank, args)
+        Trainer.__init__(self, args)
+        Evaluator.__init__(self, args)
         self.load_cae()
         self.load_model()
         self.setup()

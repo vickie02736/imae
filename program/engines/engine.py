@@ -2,14 +2,18 @@ import os
 import yaml
 import json
 import torch
+import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 
 class Engine:
-    def __init__(self, rank, args):
-        self.rank = rank
+    def __init__(self, args):
         self.args = args
+        if not dist.is_initialized():
+            dist.init_process_group("nccl")
+        torch.cuda.empty_cache()
+        self.rank = dist.get_rank()
         self.world_size = torch.cuda.device_count()
         self.device = torch.device(f"cuda:{self.rank % torch.cuda.device_count()}")
         self.load_config()
