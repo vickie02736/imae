@@ -16,8 +16,9 @@ class CaeTrainer(Trainer, Evaluator):
         Evaluator.__init__(self, rank, args)
         self.load_model()   # Here
         self.setup()        # Engine
-        self.init_training_components() # Trainer
-        Trainer.load_checkpoint(self)
+        self.load_checkpoint()
+        self.init_training_components()
+        # Trainer.load_checkpoint(self)
 
     def load_model(self):
         self.model = ConvAutoencoder(self.config)
@@ -67,12 +68,12 @@ class CaeTrainer(Trainer, Evaluator):
                 origin = sample["Input"].float().to(self.device)
                 target = sample["Input"].float().to(self.device)
                 output = self.model(origin)
-
-                if i == 1:
-                    save_path = os.path.join(
-                        self.config['cae']['save_reconstruct'])
-                    self.plot(origin_plot, output, target, 
-                              self.config['seq_length'], epoch, save_path)
+                if epoch % self.args.save_frequency == 0:
+                    if i == 1:
+                        save_path = os.path.join(
+                            self.config['cae']['save_reconstruct'])
+                        self.plot(origin_plot, output, target, 
+                                self.config['seq_length'], epoch, save_path)
 
                 # Compute losses
                 for metric, loss_fn in self.loss_functions.items():
@@ -137,8 +138,8 @@ class CaeLstmTrainer(Trainer, Evaluator):
         self.load_cae()
         self.load_model()
         self.setup()
+        self.load_checkpoint()
         self.init_training_components()
-        Trainer.load_checkpoint(self)
         if self.args.mask_flag:
             if self.args.interpolation == "linear":
                 from utils import linear_interpolation as interpolation_fn
@@ -264,11 +265,12 @@ class CaeLstmTrainer(Trainer, Evaluator):
                         loss = loss_fn(output, chunk)
                         self.running_losses[metric][j] += loss.item()                
                 if self.args.mask_flag == True:
-                    if i == 1:
-                        save_path = os.path.join(
-                            self.config['cae_lstm']['save_reconstruct'], self.args.interpolation)
-                        self.plot(origin_before_masked, masked_plot, output_chunks, target_chunks,
-                                self.config['seq_length'], epoch, save_path)
+                    if epoch % self.args.save_frequency == 0:
+                        if i == 1:
+                            save_path = os.path.join(
+                                self.config['cae_lstm']['save_reconstruct'], self.args.interpolation)
+                            self.plot(origin_before_masked, masked_plot, output_chunks, target_chunks,
+                                    self.config['seq_length'], epoch, save_path)
 
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():

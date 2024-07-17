@@ -21,11 +21,11 @@ conda activate imae
 
 echo $(date +%d-%m-%Y_%H:%M:%S)
 torchrun --nnodes=1 --nproc_per_node=1 ../program/main.py\
-        --epochs 600\
-        --resume-epoch 1\
+        --epochs 2\
+        --resume-epoch 3\
         --database shallow_water\
-        --save-frequency 20\
-        --model-name convlstm\
+        --save-frequency 2\
+        --model-name cae_lstm\
         --interpolation linear
 echo $(date +%d-%m-%Y_%H:%M:%S)
 

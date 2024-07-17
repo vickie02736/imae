@@ -35,7 +35,6 @@ class ConvAutoencoder(nn.Module):
 
     def forward(self, x):
         x = self.encoder(x)
-        print(x.shape)
         x = self.decoder(x)
         return x
 

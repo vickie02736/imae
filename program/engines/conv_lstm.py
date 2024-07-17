@@ -19,8 +19,8 @@ class ConvLstmTrainer(Trainer, Evaluator):
         Evaluator.__init__(self, rank, args)
         self.load_model()
         self.setup()
+        self.load_checkpoint()
         self.init_training_components()
-        Trainer.load_checkpoint(self)
         if self.args.mask_flag:
             if self.args.interpolation == "linear":
                 from utils import linear_interpolation as interpolation_fn
@@ -127,14 +127,15 @@ class ConvLstmTrainer(Trainer, Evaluator):
                     for metric, loss_fn in self.loss_functions.items():
                         loss = loss_fn(output, chunk)
                         self.running_losses[metric][j] += loss.item()
-                if self.args.mask_flag:        
-                    if i == 1:
-                        save_path = os.path.join(
-                            self.config['convlstm']['save_reconstruct'],
-                            self.args.interpolation)
-                        self.plot(origin_before_masked, masked_plot,
-                                interpolated_plot, output_chunks, target_chunks,
-                                self.config['seq_length'], epoch, save_path)
+                if self.args.mask_flag:
+                    if epoch % self.args.save_frequency == 0:
+                        if i == 1:
+                            save_path = os.path.join(
+                                self.config['convlstm']['save_reconstruct'],
+                                self.args.interpolation)
+                            self.plot(origin_before_masked, masked_plot,
+                                    interpolated_plot, output_chunks, target_chunks,
+                                    self.config['seq_length'], epoch, save_path)
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():
                 total_loss = sum(running_loss_list)
@@ -150,33 +151,6 @@ class ConvLstmTrainer(Trainer, Evaluator):
                     epoch, chunk_losses,
                     os.path.join(self.config['convlstm']['save_loss'],
                                 'valid_losses.json'))
-
-    def load_checkpoint(self):
-        if self.resume_epoch == 0:
-            torch.save(
-                self.model.state_dict(),
-                os.path.join(self.config['convlstm']['save_checkpoint'],
-                             self.args.interpolation, 'init.pth'))
-            losses = {}
-            with open(
-                    os.path.join(self.config['convlstm']['save_loss'],
-                                 self.args.interpolation, 'train_losses.json'),
-                    'w') as file:
-                json.dump(losses, file)
-            with open(
-                    os.path.join(self.config['convlstm']['save_loss'],
-                                 self.args.interpolation, 'valid_losses.json'),
-                    'w') as file:
-                json.dump(losses, file)
-        else:
-            checkpoint_path = os.path.join(
-                self.config['convlstm']['save_checkpoint'], self.args.interpolation,
-                f'checkpoint_{self.resume_epoch-1}.pth')
-            checkpoint = torch.load(checkpoint_path, map_location=self.device)
-            self.model.load_state_dict(checkpoint['model'])
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
-            self.scheduler.load_state_dict(checkpoint['scheduler'])
-            self.scaler.load_state_dict(checkpoint['scaler'])
 
     def plot(self, origin, masked_origin, interpolated_origin, output_chunks,
              target_chunks, seq_len, idx, save_path):

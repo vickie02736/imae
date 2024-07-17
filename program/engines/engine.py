@@ -45,7 +45,7 @@ class Engine:
                     json.dump(losses, file)
                 with open(os.path.join(self.save_loss_path, 'valid_losses.json'), 'w') as file:
                     json.dump(losses, file)
-            else:
+            else: 
                 self.loaded_checkpoint = torch.load(os.path.join(self.save_checkpoint_path, f'checkpoint_{self.args.resume_epoch-1}.pth'), map_location=self.device)
                 self.model.load_state_dict(self.loaded_checkpoint['model'])
 
