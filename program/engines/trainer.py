@@ -25,7 +25,7 @@ class Trainer(Engine):
                                      num_replicas=self.world_size,
                                      rank=self.rank)
         self.train_loader = DataLoader(dataset,
-                                batch_size=self.config[self.args.model_name]['batch_size'],
+                                batch_size=self.config[self.args.model_name]['train_batch_size'],
                                 pin_memory=True,
                                 shuffle=False,
                                 drop_last=True,
