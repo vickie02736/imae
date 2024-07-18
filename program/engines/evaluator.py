@@ -17,7 +17,7 @@ class Evaluator(Engine):
         if self.config['database'] == 'shallow_water':
             dataset = seq_DataBuilder(self.data_config['valid_file'],self.config['seq_length'], self.config['valid']['rollout_times'], timestep=100)
             sampler = DistributedSampler(dataset, num_replicas=self.world_size, rank=self.rank)
-            self.eval_loader = DataLoader(dataset, batch_size=self.config[self.args.model_name]['batch_size'],
+            self.eval_loader = DataLoader(dataset, batch_size=self.config[self.args.model_name]['valid_batch_size'],
                                     pin_memory=True, shuffle=False, drop_last=True, sampler=sampler)
 
     def init_eval_metrics(self):
@@ -70,4 +70,4 @@ class Tester(Evaluator):
             filename = self.config['test']['filename']
             dataset = seq_DataBuilder(self.data_config[filename], self.config['seq_length'], self.args.rollout_times, timestep=self.config['test']['timestep'])
             sampler = DistributedSampler(dataset, num_replicas=self.world_size, rank=self.rank)
-            self.eval_loader = DataLoader(dataset, batch_size=self.config[self.args.model_name]['batch_size'], pin_memory=True, shuffle=False, drop_last=True, sampler=sampler)
+            self.eval_loader = DataLoader(dataset, batch_size=self.config[self.args.model_name]['test_batch_size'], pin_memory=True, shuffle=False, drop_last=True, sampler=sampler)

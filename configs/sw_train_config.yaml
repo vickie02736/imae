@@ -22,7 +22,9 @@ imae:
   save_loss: '../data/shallow_water/imae/loss/'
   save_checkpoint: '../data/shallow_water/imae/ckpt/'
   save_reconstruct: '../data/shallow_water/imae/rec/'
-  batch_size: 32
+  train_batch_size: 32
+  valid_batch_size: 32 
+  test_batch_size: 32
 
 convlstm:
   hidden_dim: [32, 32]
@@ -31,14 +33,18 @@ convlstm:
   save_loss: '../data/shallow_water/convlstm/loss/'
   save_checkpoint: '../data/shallow_water/convlstm/ckpt/'
   save_reconstruct: '../data/shallow_water/convlstm/rec/'
-  batch_size: 8
+  train_batch_size: 32
+  valid_batch_size: 32 
+  test_batch_size: 32
 
 cae:
   latent_dim: 128
   save_loss: '../data/shallow_water/cae/loss/'
   save_checkpoint: '../data/shallow_water/cae/ckpt/'
   save_reconstruct: '../data/shallow_water/cae/rec/'
-  batch_size: 32
+  train_batch_size: 32
+  valid_batch_size: 32 
+  test_batch_size: 32
 
 cae_lstm: 
   cae_load_epoch: 4
@@ -46,7 +52,9 @@ cae_lstm:
   save_loss: '../data/shallow_water/caelstm/loss/'
   save_checkpoint: '../data/shallow_water/caelstm/ckpt/'
   save_reconstruct: '../data/shallow_water/caelstm/rec/'
-  batch_size: 16
+  train_batch_size: 32
+  valid_batch_size: 32 
+  test_batch_size: 32
 
 train:
   loss_fn: "MSE"
