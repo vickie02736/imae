@@ -182,9 +182,8 @@ class ImaeTrainer(Trainer, Evaluator):
 
 
 class ImaeTester(Tester):
-
     def __init__(self, args):
-        Evaluator.__init__(self, args)
+        super().__init__(args)
         self.load_model()
         self.setup()
         self.load_checkpoint()
@@ -215,7 +214,6 @@ class ImaeTester(Tester):
             chunk_losses = {}
             for metric, running_loss_list in self.running_losses.items():
                 average_loss = [_ / len(self.eval_loader.dataset) for _ in running_loss_list]
-                # average_loss = running_loss_list / len(self.eval_loader.dataset)
                 chunk_losses[metric] = average_loss
             loss_savepath = os.path.join(self.config['imae']['save_loss'], f'test_loss_{self.args.mask_ratio}.json')
             with open(loss_savepath, 'w') as file:

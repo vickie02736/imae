@@ -32,6 +32,8 @@ def load_engine(model_name, test_flag):
     else:
         engines = {
             'imae': 'ImaeTester', 
+            'convlstm': 'ConvLstmTester',
+            'cae_lstm': 'CaeLstmTester'
         }
 
     engine_name = engines.get(model_name)

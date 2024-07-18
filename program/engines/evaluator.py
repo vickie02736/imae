@@ -60,8 +60,8 @@ class Evaluator(Engine):
 
 
 class Tester(Evaluator): 
-    def __init__(self, rank, args):
-        super(Tester, self).__init__(rank, args)
+    def __init__(self, args):
+        super(Tester, self).__init__(args)
         self.init_eval_dataloader()
         self.loss_functions, self.running_losses = self.init_eval_metrics()
 

@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 from models import ConvAutoencoder, LSTMPredictor
 from .trainer import Trainer
-from .evaluator import Evaluator
+from .evaluator import Evaluator, Tester
 from utils import save_losses, mask
 
 class CaeTrainer(Trainer, Evaluator):
@@ -251,7 +251,6 @@ class CaeLstmTrainer(Trainer, Evaluator):
                 target_chunks = torch.chunk(target, self.rollout_times, dim=1)
 
                 output_chunks = []
-                # latent_output_chunks = []
                 for j, chunk in enumerate(target_chunks):
                     if j == 0:
                         latent_output = self.model(latent_origin)
@@ -338,3 +337,70 @@ class CaeLstmTrainer(Trainer, Evaluator):
         plt.tight_layout()
         plt.savefig(os.path.join(save_path, f"{idx}.png"))
         plt.close()
+
+
+
+class CaeLstmTester(Tester):
+
+    def __init__(self, args): 
+        super().__init__(args)
+        self.load_cae()
+        self.load_model()
+        self.setup()
+        self.load_checkpoint()
+        if self.args.mask_flag:
+            if self.args.interpolation == "linear":
+                from utils import linear_interpolation as interpolation_fn
+            elif self.args.interpolation == "gaussian":
+                from utils import gaussian_interpolation as interpolation_fn
+            self.interpolation_fn = interpolation_fn
+
+    def load_model(self):
+        self.model = LSTMPredictor(self.config)
+
+    def load_cae(self):
+        self.cae_model = ConvAutoencoder(self.config).to(self.device)
+        self.cae_model = DDP(self.cae_model, device_ids=[self.rank])
+        load_epoch = self.config['cae_lstm']['cae_load_epoch']
+        checkpoint_path = os.path.join(
+            self.config['cae']['save_checkpoint'], f'checkpoint_{load_epoch}.pth')
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        self.cae_model.load_state_dict(checkpoint['model'])
+        self.cae_model = self.cae_model.module
+        self.cae_model.eval()
+
+    def evaluate(self):
+        self.model.eval()
+        with torch.no_grad():
+            for i, sample in enumerate(self.eval_loader):
+                if self.args.mask_flag:
+                    origin, idx = mask(sample["Input"], 
+                                            mask_mtd=self.config["mask_method"]) 
+                    origin = origin.float().to(self.device)
+                    latent_origin = self.cae_model.encoder(origin)
+                    latent_origin = self.interpolation_fn(latent_origin, idx)
+                else:
+                    origin = sample["Input"].float().to(self.device)
+                    latent_origin = self.cae_model.encoder(origin)
+                target = sample["Target"].float().to(self.device)
+                target_chunks = torch.chunk(target, self.rollout_times, dim=1)
+
+                output_chunks = []
+                for j, chunk in enumerate(target_chunks):
+                    if j == 0:
+                        latent_output = self.model(latent_origin)
+                    else:
+                        latent_output = self.model(latent_output)
+                    output = self.cae_model.decoder(latent_output)
+                    output_chunks.append(output)
+                    # Compute losses
+                    for metric, loss_fn in self.loss_functions.items():
+                        loss = loss_fn(output, chunk)
+                        self.running_losses[metric][j] += loss.item()   
+            chunk_losses = {}
+            for metric, running_loss_list in self.running_losses.items():
+                average_loss = [_ / len(self.eval_loader.dataset) for _ in running_loss_list]
+                chunk_losses[metric] = average_loss
+            loss_savepath = os.path.join(self.config['cae_lstm']['save_loss'], self.args.interpolation, f'test_loss_{self.args.mask_ratio}.json')
+            with open(loss_savepath, 'w') as file:
+                json.dump(chunk_losses, file)

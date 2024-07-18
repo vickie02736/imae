@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 
 from models import ConvLSTM
 from .trainer import Trainer
-from .evaluator import Evaluator
+from .evaluator import Evaluator, Tester
 from utils import save_losses, mask
 
 
@@ -210,3 +210,54 @@ class ConvLstmTrainer(Trainer, Evaluator):
         plt.tight_layout()
         plt.savefig(os.path.join(save_path, f"{idx}.png"))
         plt.close()
+
+
+class ConvLstmTester(Tester):
+
+    def __init__(self, args): 
+        super().__init__(args)
+        self.load_model()
+        self.setup()
+        self.load_checkpoint()
+        if self.args.mask_flag:
+            if self.args.interpolation == "linear":
+                from utils import linear_interpolation as interpolation_fn
+            elif self.args.interpolation == "gaussian":
+                from utils import gaussian_interpolation as interpolation_fn
+            self.interpolation_fn = interpolation_fn
+
+    def load_model(self):
+        self.model = ConvLSTM(self.config)
+
+    def evaluate(self):
+        self.model.eval()
+        with torch.no_grad():
+            for i, sample in enumerate(self.eval_loader):
+                if self.args.mask_flag:
+                    masked_origin, idx = mask(sample["Input"],
+                                            mask_mtd=self.config["mask_method"])
+                    origin = self.interpolation_fn(masked_origin, idx)
+                else: 
+                    origin = sample["Input"]
+                origin = origin.float().to(self.device)
+                target = sample["Target"].float().to(self.device)
+                target_chunks = torch.chunk(target, self.rollout_times, dim=1)
+
+                output_chunks = []
+                for j, chunk in enumerate(target_chunks):
+                    if j == 0:
+                        output = self.model(origin)
+                    else:
+                        output = self.model(output)
+                    output_chunks.append(output)
+                    # Compute losses
+                    for metric, loss_fn in self.loss_functions.items():
+                        loss = loss_fn(output, chunk)
+                        self.running_losses[metric][j] += loss.item()
+            chunk_losses = {}
+            for metric, running_loss_list in self.running_losses.items():
+                average_loss = [_ / len(self.eval_loader.dataset) for _ in running_loss_list]
+                chunk_losses[metric] = average_loss
+            loss_savepath = os.path.join(self.config['convlstm']['save_loss'], self.args.interpolation, f'test_loss_{self.args.mask_ratio}.json')
+            with open(loss_savepath, 'w') as file:
+                json.dump(chunk_losses, file)
