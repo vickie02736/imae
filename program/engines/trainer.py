@@ -52,7 +52,7 @@ class Trainer(Engine):
             pass
         if self.config['train']['scheduler'] == 'CosineAnnealingLR':
             T_start = self.args.epochs * 0.05 * self.len_dataset // self.config[self.args.model_name][
-                'batch_size']
+                'train_batch_size']
             T_start = int(T_start)
             self.scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
                 self.optimizer, T_start, eta_min=1e-6, last_epoch=-1)
